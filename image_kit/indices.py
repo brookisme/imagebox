@@ -2,7 +2,10 @@ import numpy as np
 #
 # CONSTANTS
 # 
+BANDS_FIRST=True
 EPS=1e-8
+
+
 
 
 #****************************************************************
@@ -11,8 +14,6 @@ EPS=1e-8
 #                 red, green, blue, nir, red-edge, swir1
 #
 #****************************************************************
-
-# BU = NDBI - NDVI
 
 
 INDICES={
@@ -55,7 +56,7 @@ INDICES={
 #
 # METHODS
 #
-def index(im,index,*normalized_difference_args,**ratio_index_kwargs):
+def index(im,index_name,*normalized_difference_args,**ratio_index_kwargs):
     """ band index based on name, or ndiff args or ratio-index args
     
     Args:
@@ -64,14 +65,14 @@ def index(im,index,*normalized_difference_args,**ratio_index_kwargs):
         *normalized_difference_args: args for normalized_difference
         **ratio_index_kwargs: config or ratio_index
     """
-    if index:
-        args=INDICES[index]
+    if index_name:
+        args=INDICES[index_name]
     else:
         if normalized_difference_args:
             args=normalized_difference_args
         else:
             args=ratio_index_kwargs
-    if isinstance(args,dict)
+    if isinstance(args,dict):
         return ratio_index(im,**args)
     else:
         if isinstance(args[0],str):

@@ -3,11 +3,11 @@ import numpy as np
 #
 # CONSTANTS
 #
-DEFAULT_VMAP_VALUE=0
+IMAGE='image'
+DEFAULT_VMAP_VALUE=IMAGE
 BANDS_FIRST_AXES=(1,2)
 BANDS_LAST_AXES=(0,1)
 BANDS_FIRST=True
-IMAGE='image'
 DENORM_ERROR='image_kit.processor.denormalize: bands last not yet implemented'
 SWAP_BANDS_ERROR='image_kit.processor._swap_bands_axes: im.ndim must be 3 or 4'
 
@@ -29,7 +29,7 @@ def center(im,means=None,to_int=False,bands_first=BANDS_FIRST):
     if means is None:
         means=np.mean(im,axis=_axes(im.ndim,bands_first))
     if bands_first:
-        means=to_vector(means)
+        means=_to_vector(means)
     im=(im-means)
     if to_int:
         im=im.round().astype(np.uint8)
@@ -52,7 +52,7 @@ def normalize(im,means=None,stdevs=None,bands_first=BANDS_FIRST):
         stdevs=np.std(im,axis=_axes(im.ndim,bands_first))   
     im=center(im,means=means,to_int=False,bands_first=bands_first)
     if bands_first:
-        stdevs=to_vector(stdevs)
+        stdevs=_to_vector(stdevs)
     return im/stdevs
 
 
@@ -90,7 +90,7 @@ def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
     if default_value==IMAGE:
         mapped_im=im.copy()
     else:
-        mapped_im=np.full_like(im,not_value)
+        mapped_im=np.full_like(im,default_value)
     for k,v in value_map.items():
         mapped_im[np.isin(im,v)]=k
     return mapped_im
@@ -141,15 +141,15 @@ def augment(im,k=False,flip=False,bands_first=BANDS_FIRST):
         k<int|False>: number of 90 degree rotations 
         flip<bool>: flip or don't flip
 
-
     * PYTORCH HACK:
+    * - im=im+0
     * - negative stride issue 
     * - https://discuss.pytorch.org/t/torch-from-numpy-not-support-negative-strides/3663/7
     """
     if k is not False:
         im=np.rot90(im,k,axes=_axes(im.ndim,bands_first))
     if flip is not False:
-        if im.ndim=2 or (not bands_first):
+        if (im.ndim==2) or (not bands_first):
             axis=1
         else:
             axis=2
@@ -171,7 +171,7 @@ def is_bands_first(im):
     """
     shape=im.shape
     ndim=im.ndim    
-    return shape[-3]<=shape[-1]:
+    return shape[-3]<=shape[-1]
 
 
 def to_bands_last(im):
@@ -216,4 +216,7 @@ def _swap_bands_axes(im):
         raise ValueError(SWAP_BANDS_ERROR)
     return im
 
+
+def _to_vector(arr):
+    return np.array(arr).reshape(-1,1,1)
 
