@@ -1,3 +1,4 @@
+from random import randint
 import numpy as np
 import image_kit.io as io
 import image_kit.processor as proc
@@ -7,7 +8,11 @@ import image_kit.indices as indices
 # 
 INPUT_DTYPE=np.float
 TARGET_DTYPE=np.int64
+DEFAULT_SIZE=256
+DEFAULT_OVERLAP=0
 TO_CATEGORICAL_ERROR='image_kit.handler: nb_categories required for to_categorical'
+CROPPING_ERROR='InputTargetHandler: float_cropping not compatible with input/target_cropping'
+
 
 
 #
@@ -45,6 +50,14 @@ class InputTargetHandler(object):
         augment<bool>: augment image
         input_cropping<int|None>: amount to crop input image
         target_cropping<int|None>: amount to crop target image
+        float_cropping<int|None>: 
+            remove pixels from h/w of input and target starting at random i,j
+        width<int|None>: image width (required if float cropping and not tiller)
+        height<int|None>: image height (required if float cropping and not tiller)
+        tiller<Tiller|True|None>:
+            tile the image then read in a specific tile
+        tiller_config<dict>:
+            if tiller is True create tiller=Tiller(**tiller_config)
         input_dtype<str>: input data type
         target_dtype<str>: target data type
 
@@ -61,6 +74,11 @@ class InputTargetHandler(object):
             augment=True,
             input_cropping=None,
             target_cropping=None,
+            float_cropping=None,
+            width=None,
+            height=None,
+            tiller=None,
+            tiller_config={},
             input_dtype=INPUT_DTYPE,
             target_dtype=TARGET_DTYPE ):
         self.input_bands=input_bands
@@ -73,16 +91,29 @@ class InputTargetHandler(object):
             raise ValueError(TO_CATEGORICAL_ERROR)
         self.to_categorical=to_categorical
         self.nb_categories=nb_categories
-        self._set_augmentation(augment)
-        self.input_cropping=input_cropping
-        self.target_cropping=target_cropping
+        self.augment=augment
+        self.set_augmentation()
+        if (input_cropping or target_cropping) and float_cropping:
+            raise ValueError(CROPPING_ERROR)
+        else:
+            self.input_cropping=input_cropping
+            self.target_cropping=target_cropping
+            self.float_cropping=float_cropping
+            self.width=width
+            self.height=height
+            self.set_float_window()
+        if self.tiller is True:
+            self.tiller=Tiller(**tiller_config)
+        else:
+            self.tiller=tiller
+        self.set_window()
         self.input_dtype=input_dtype
         self.target_dtype=target_dtype
 
 
     def input(self,path,return_profile=False):
         self.input_path=path
-        im,profile=io.read(path)
+        im,profile=self._read(path)
         im=process_input(
             im,
             input_bands=self.input_bands,
@@ -99,7 +130,7 @@ class InputTargetHandler(object):
 
     def target(self,path,return_profile=False):
         self.target_path=path
-        im,profile=io.read(path)
+        im,profile=self._read(path)
         im=process_target(
             im,
             value_map=self.value_map,
@@ -114,16 +145,54 @@ class InputTargetHandler(object):
             return_profile )
 
 
-    #
-    # INTERNAL METHODS
-    #
-    def _set_augmentation(self,augment):
-        self.augment=augment
-        if augment:
-            self.k, self.flip=proc.augmentation()
+    def set_augmentation(self,k=None,flip=None):
+        if self.augment:
+            self.k, self.flip=proc.augmentation(k,flip)
         else:
             self.k=False
             self.flip=False
+    
+
+    def set_window(self,window_index=None):
+        if self.tiller:
+            if window_index is None:
+                window_index=randint(0,len(self.tiller)-1)
+            self.window_index=window_index
+        else:
+            self.window_index=False
+
+
+    def set_float_window(self):
+        if self.float_cropping:
+            self.float_x=randint(0,2*self.float_cropping)
+            self.float_y=randint(0,2*self.float_cropping)
+        else:
+            self.float_x=False
+            self.float_y=False
+    
+
+    #
+    # INTERNAL METHODS
+    #
+    def _read(self,path):
+        if self.tiller:
+            window=self.tiller[self.window_index]
+            if self.float_cropping:
+                x=window[0]+self.float_x
+                y=window[1]+self.float_y
+                w=window[2]-2*self.float_cropping
+                h=window[3]-2*self.float_cropping
+                window=x,y,w,h
+        else:
+            if self.float_cropping:
+                x=self.float_x
+                y=self.float_y
+                w=self.width-2*self.float_cropping
+                h=self.height-2*self.float_cropping
+                window=x,y,w,h
+            else:
+                window=None
+        return io.read(path,window)
 
 
 
@@ -188,4 +257,87 @@ def process_target(
     return im.astype(dtype)
 
 
+
+
+#
+# TILLER
+#
+class Tiller(object):
+    """ Tiller
+    
+    For a given boundary shape generate windows of a given size and overlap
+
+    Args:
+        boundary_width/height<int|None>: 
+            - width/height of boundary
+            - required if boundary shape not specified
+        boundary_shape<tuple|None>:
+            - shape tuple
+            - required if width/height not specified
+        size<int>: tile size (width/height - only supports square tiles)
+        overlap<int>: overlap between tiles
+    """
+    def __init__(
+            self,
+            boundary_width=None,
+            boundary_height=None,
+            boundary_shape=None,
+            size=DEFAULT_SIZE,
+            overlap=DEFAULT_OVERLAP):
+        if not overlap:
+            overlap=0
+        self.size=size
+        self.inner_size=self.size-2*overlap
+        self._set_shape_attributes(
+            boundary_width,
+            boundary_height,
+            boundary_shape,
+            overlap)
+        self.length=self.cols*self.rows
+            
+            
+    def column_row(self,index):
+        col=index//self.rows
+        row=index-col*self.rows
+        return int(col), int(row)
+    
+
+    def window(self,index=None,col=None,row=None):
+        if index is not None:
+            col,row=self.column_row(index)
+        self.col,self.row=col,row  
+        col_off=self.col_offset+col*self.size
+        row_off=self.row_offset+row*self.size
+        return (col_off,row_off,self.size,self.size)
+    
+
+    def __len__(self):
+        return self.length
+            
+
+    def __getitem__(self, index):
+        if (index>=self.length):
+            raise IndexError
+        self.index=index
+        return self.window(index=self.index)
+            
+            
+    #
+    # INTERNEL
+    #
+    def _set_shape_attributes(
+            self,
+            boundary_width,
+            boundary_height,
+            boundary_shape,
+            overlap):
+        if boundary_shape:
+            boundary_height,boundary_width=boundary_shape
+        self.cols=math.floor((boundary_width-2*overlap)/self.inner_size)
+        self.rows=math.floor((boundary_height-2*overlap)/self.inner_size)
+        self.width=2*overlap+self.cols*self.inner_size
+        self.height=2*overlap+self.rows*self.inner_size
+        self.col_offset=math.floor((boundary_width-self.width)/2)
+        self.row_offset=math.floor((boundary_height-self.height)/2)
+        self.overlap=overlap
 
