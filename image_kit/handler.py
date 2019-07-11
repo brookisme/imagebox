@@ -47,9 +47,12 @@ class InputTargetHandler(object):
             - number of target categories
             - required for to_categorical
         augment<bool>: augment image
-        cropping<int|None>: amount to crop input and target image (overrides input/target_cropping)
-        input_cropping<int|None>: amount to crop input image
-        target_cropping<int|None>: amount to crop target image
+        cropping<int|None>:
+            - amount to crop both input and target image when reading the image
+        input_cropping<int|None>: 
+            - amount to crop input image after processing the image
+        target_cropping<int|None>: 
+            - amount to crop target image after processing the image
         float_cropping<int|None>: 
             remove pixels from h/w of input and target starting at random i,j
         width<int|None>: image width (required if float cropping and not tiller)
@@ -82,6 +85,10 @@ class InputTargetHandler(object):
             tiller_config={},
             input_dtype=INPUT_DTYPE,
             target_dtype=TARGET_DTYPE ):
+        if tiller is True:
+            self.tiller=Tiller(**tiller_config)
+        else:
+            self.tiller=tiller
         self.input_bands=input_bands
         self.band_indices=band_indices
         self.value_map=value_map
@@ -95,16 +102,12 @@ class InputTargetHandler(object):
         self.augment=augment
         self.set_augmentation()
         self.cropping=cropping or 0
-        self.input_cropping=cropping or input_cropping
-        self.target_cropping=cropping or target_cropping
+        self.input_cropping=input_cropping
+        self.target_cropping=target_cropping
         self.float_cropping=float_cropping
         self.width=width
         self.height=height
         self.set_float_window()
-        if self.tiller is True:
-            self.tiller=Tiller(**tiller_config)
-        else:
-            self.tiller=tiller
         self.set_window()
         self.input_dtype=input_dtype
         self.target_dtype=target_dtype
@@ -176,24 +179,23 @@ class InputTargetHandler(object):
     def _read(self,path):
         if self.tiller:
             window=self.tiller[self.window_index]
-            window=self._cropping_window(window)
-            window=self._float_window(window)
         else:
-            self._set_dimensions()
-            window=self._cropping_window()
-            window=self._float_window(window)
+            self._set_dimensions(path)
+            window=None
+        window=self._cropping_window(window)
+        window=self._float_window(window)
         return io.read(path,window)
 
 
-    def _cropping_window(self,window=None):
+    def _cropping_window(self,window):
         if window:
-            window=window[0],window[1],window[2]-2*self.cropping,window[3]-2*self.cropping
+            window=window[0]+self.cropping,window[1]+self.cropping,window[2]-2*self.cropping,window[3]-2*self.cropping
         elif self.cropping:
-            window=0,0,self.width-2*self.cropping,self.height-2*self.cropping
+            window=self.cropping,self.cropping,self.width-2*self.cropping,self.height-2*self.cropping
         return window
 
 
-    def _float_window(self,window=None):
+    def _float_window(self,window):
         if window and self.float_cropping:
             x=window[0]+self.float_x
             y=window[1]+self.float_y
