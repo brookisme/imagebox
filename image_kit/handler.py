@@ -11,7 +11,6 @@ TARGET_DTYPE=np.int64
 DEFAULT_SIZE=256
 DEFAULT_OVERLAP=0
 TO_CATEGORICAL_ERROR='image_kit.handler: nb_categories required for to_categorical'
-CROPPING_ERROR='InputTargetHandler: float_cropping not compatible with input/target_cropping'
 
 
 
@@ -48,6 +47,7 @@ class InputTargetHandler(object):
             - number of target categories
             - required for to_categorical
         augment<bool>: augment image
+        cropping<int|None>: amount to crop input and target image (overrides input/target_cropping)
         input_cropping<int|None>: amount to crop input image
         target_cropping<int|None>: amount to crop target image
         float_cropping<int|None>: 
@@ -72,6 +72,7 @@ class InputTargetHandler(object):
             to_categorical=False,
             nb_categories=None,
             augment=True,
+            cropping=None,
             input_cropping=None,
             target_cropping=None,
             float_cropping=None,
@@ -93,15 +94,13 @@ class InputTargetHandler(object):
         self.nb_categories=nb_categories
         self.augment=augment
         self.set_augmentation()
-        if (input_cropping or target_cropping) and float_cropping:
-            raise ValueError(CROPPING_ERROR)
-        else:
-            self.input_cropping=input_cropping
-            self.target_cropping=target_cropping
-            self.float_cropping=float_cropping
-            self.width=width
-            self.height=height
-            self.set_float_window()
+        self.cropping=cropping or 0
+        self.input_cropping=cropping or input_cropping
+        self.target_cropping=cropping or target_cropping
+        self.float_cropping=float_cropping
+        self.width=width
+        self.height=height
+        self.set_float_window()
         if self.tiller is True:
             self.tiller=Tiller(**tiller_config)
         else:
@@ -177,23 +176,37 @@ class InputTargetHandler(object):
     def _read(self,path):
         if self.tiller:
             window=self.tiller[self.window_index]
-            if self.float_cropping:
-                x=window[0]+self.float_x
-                y=window[1]+self.float_y
-                w=window[2]-2*self.float_cropping
-                h=window[3]-2*self.float_cropping
-                window=x,y,w,h
+            window=self._cropping_window(window)
+            window=self._float_window(window)
         else:
-            if self.float_cropping:
-                x=self.float_x
-                y=self.float_y
-                w=self.width-2*self.float_cropping
-                h=self.height-2*self.float_cropping
-                window=x,y,w,h
-            else:
-                window=None
+            self._set_dimensions()
+            window=self._cropping_window()
+            window=self._float_window(window)
         return io.read(path,window)
 
+
+    def _cropping_window(self,window=None):
+        if window:
+            window=window[0],window[1],window[2]-2*self.cropping,window[3]-2*self.cropping
+        elif self.cropping:
+            window=0,0,self.width-2*self.cropping,self.height-2*self.cropping
+        return window
+
+
+    def _float_window(self,window=None):
+        if window and self.float_cropping:
+            x=window[0]+self.float_x
+            y=window[1]+self.float_y
+            w=window[2]-2*self.float_cropping
+            h=window[3]-2*self.float_cropping
+            window=x,y,w,h
+        return window
+
+
+    def _set_dimensions(self,path):
+        if not (self.width and self.height):
+            tmp,_=io.read(path)
+            self.height,self.width=tmp.shape[1:]
 
 
     def _return_data(self,im,profile,return_profile):
