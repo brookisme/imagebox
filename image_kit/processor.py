@@ -81,8 +81,8 @@ def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
     Args:
         im<np.array>: image array
         value_map<dict>: 
-            - band-wise means to center the array around
-            - if none use the band-wise means of the image itself
+            - keys: new values in mapped_im
+            - values<list>: list of values to be mapped to corresponding key  
         default_value<int|float|np.nan|'image'>: 
             if default_value is 'image' use image values for unmapped values
             else use default value for unmapped values
