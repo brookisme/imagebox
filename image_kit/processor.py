@@ -56,7 +56,7 @@ def normalize(im,means=None,stdevs=None,bands_first=BANDS_FIRST):
     return im/stdevs
 
 
-def denormalize(im,means,stdevs,bands_first=BANDS_FIRST):
+def denormalize(im,means,stdevs,bands_first=BANDS_FIRST,dtype=np.uint8):
     """ denormalize image array
     Args:
         im<np.array>: image array
@@ -71,7 +71,7 @@ def denormalize(im,means,stdevs,bands_first=BANDS_FIRST):
         stdevs=np.array(stdevs).reshape((im.shape[0],1,1))
         means=np.array(means).reshape((im.shape[0],1,1))
         im=stdevs*im+means
-        return im.astype(np.uint8)
+        return im.astype(dtype)
     else:
         raise NotImplementedError(DENORM_ERROR)
 
@@ -170,7 +170,6 @@ def is_bands_first(im):
     Returns: True/False
     """
     shape=im.shape
-    ndim=im.ndim    
     return shape[-3]<=shape[-1]
 
 
@@ -178,8 +177,7 @@ def to_bands_last(im):
     """ convert image to bands last
     """
     shape=im.shape
-    ndim=im.ndim
-    if is_bands_first(im):
+    if (im.ndim>2) and is_bands_first(im):
         im=_swap_bands_axes(im)
     return im
 
@@ -188,8 +186,7 @@ def to_bands_first(im):
     """ convert image to bands first
     """    
     shape=im.shape
-    ndim=im.ndim
-    if not is_bands_first(im):
+    if (im.ndim>2) and not is_bands_first(im):
         im=_swap_bands_axes(im)
     return im
 
