@@ -4,7 +4,6 @@ import numpy as np
 import rasterio as rio
 from rasterio.windows import Window
 from affine import Affine
-from torch_kit.utils.image_processor import normalize, center
 
 
 #
