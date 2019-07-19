@@ -11,6 +11,15 @@ from affine import Affine
 #
 def read(path,window=None,window_profile=True,dtype=None):
     """ read image
+    Args: 
+        - path<str>: source path
+        - window<tuple|Window>: col_off, row_off, width, height
+        - window_profile<bool>:
+            - if True return profile for the window data
+            - else return profile for the src-image
+        - dtype<str>:
+    Returns:
+        <tuple> np.array, image-profile
     """
     with rio.open(path,'r') as src:
         profile=src.profile
@@ -29,9 +38,10 @@ def read(path,window=None,window_profile=True,dtype=None):
 def write(im,path,profile,makedirs=True):
     """ write image
     Args: 
-        - im (np.array): image
-        - path (str): destination path
-        - profile (dict): image profile
+        - im<np.array>: image
+        - path<str>: destination path
+        - profile<dict>: image profile
+        - makedirs<bool>: if True create necessary directories
     """  
     if makedirs:
         dirname=os.path.dirname(path)

@@ -3,7 +3,7 @@ setup(
   name = 'image_kit',
   packages = ['image_kit'],
   version = '0.0.0.1',
-  description = 'Image Kit: Utilities for Reading/Writing images',
+  description = 'Image Kit: python utilities for working with multispectral imagery',
   author = 'Brookie Guzder-Williams',
   author_email = 'brook.williams@gmail.com',
   url = 'https://github.com/brookisme/image_kit',
