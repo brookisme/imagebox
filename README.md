@@ -114,9 +114,18 @@ Those are the simplest examples, but you should be able to create almost any com
 <a name='handler'></a>
 ##### Handler
 
-_processing for target and input data_
+_handlers processing for target and input data_
 
-Processes input and target data in conjunction. InputTargetHandler is able to:
+This module contains two classes:
+
+- [InputTargetHandler](#inpttarg): Processes input and target data in conjunction
+- [Tiller](#tiller): for a given boundary shape, this generates windows of a given size and overlap which can be used to tile an image
+
+<a name='inpttarg'>
+
+###### InputTargetHandler
+
+The InputTargetHandler is able to:
 
 - compute band indices (ndvi, ndwi, ...)
 - normalize or center the input imagery
@@ -131,7 +140,6 @@ Processes input and target data in conjunction. InputTargetHandler is able to:
 An example speaks some number of words:
 
 The example below creates a pytorch Dataloader/Dataset from a dataframe with rows-containing input and target filenames. The bulk of the code is simply getting and returning those input and target filenames. All the manipulation is done by InputTargetHandler:
-
 
 ```python
 class UrbanLandUseDS(Dataset):
@@ -269,6 +277,40 @@ class UrbanLandUseDS(Dataset):
     def _clean(self,obj):
         return  { k:v for k,v in obj.items() if v is not None }
 
+```
+
+
+<a name='tiller'>
+    
+###### Tiller
+
+For a given boundary shape generate windows (x-offset, y-offset, width, height) of a given size and overlap
+
+```
+Usage:
+    im=np.arange(1024**2).reshape((1024,1024))
+    tiller=hand.Tiller(boundary_shape=im.shape,size=100,overlap=10)
+    xoff,yoff,width,height=tiller[0]
+    print("NB WINDOWS:",len(tiller))
+    print("WINDOW-0:",xoff,yoff,width,height)
+    im[yoff:yoff+height,xoff:xoff+width]
+    ### output:
+    NB WINDOWS: 115600
+    WINDOW-0: 1 1 5 5
+    array([[1025, 1026, 1027, 1028, 1029],
+           [2049, 2050, 2051, 2052, 2053],
+           [3073, 3074, 3075, 3076, 3077],
+           [4097, 4098, 4099, 4100, 4101],
+           [5121, 5122, 5123, 5124, 5125]])
+Args:
+    boundary_width/height<int|None>: 
+        - width/height of boundary
+        - required if boundary shape not specified
+    boundary_shape<tuple|None>:
+        - shape tuple
+        - required if width/height not specified
+    size<int>: tile size (width/height - only supports square tiles)
+    overlap<int>: overlap between tiles
 ```
 
 

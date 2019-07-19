@@ -1,3 +1,4 @@
+import math
 from random import randint
 import numpy as np
 import image_kit.io as io
@@ -280,7 +281,23 @@ def process_target(
 class Tiller(object):
     """ Tiller
     
-    For a given boundary shape generate windows of a given size and overlap
+    For a given boundary shape generate windows (x-offset, y-offset, width, height) of a given size and overlap
+
+    Usage:
+        im=np.arange(1024**2).reshape((1024,1024))
+        tiller=hand.Tiller(boundary_shape=im.shape,size=100,overlap=10)
+        xoff,yoff,width,height=tiller[0]
+        print("NB WINDOWS:",len(tiller))
+        print("WINDOW-0:",xoff,yoff,width,height)
+        im[yoff:yoff+height,xoff:xoff+width]
+        ### output:
+        NB WINDOWS: 115600
+        WINDOW-0: 1 1 5 5
+        array([[1025, 1026, 1027, 1028, 1029],
+               [2049, 2050, 2051, 2052, 2053],
+               [3073, 3074, 3075, 3076, 3077],
+               [4097, 4098, 4099, 4100, 4101],
+               [5121, 5122, 5123, 5124, 5125]])
 
     Args:
         boundary_width/height<int|None>: 
