@@ -4,7 +4,7 @@ ImageKit contains four main modules:
 
 - [io](#io): a rasterio wrapper for reading/writing imagery. Simplifies reading windows by returning a window specific profile
 - [processor](#processor): a number of methods for processing images such as normalization, mapping categorical values, augmentation, etc.
-- [indices](#indicies): simplifies computing band-indices. includes a number of preset band indices, such as NDVI, NDWI, BuiltUp-Index.
+- [indices](#indices): simplifies computing band-indices. includes a number of preset band indices, such as NDVI, NDWI, BuiltUp-Index.
 - [handler](#handler): A class that handles processing for target and input data simultaneously. This is particularly useful in machine-learning. The class simplifies the creation of (pytorch) Datasets/Dataloaders or (keras) data-generators.
  
 
