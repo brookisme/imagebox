@@ -133,19 +133,21 @@ def augmentation(k=None,flip=None):
     return k,flip
 
 
-def augment(im,k=False,flip=False,bands_first=BANDS_FIRST):
+def augment(im,k=False,flip=False,bands_first=BANDS_FIRST,random=False):
     """ augment (rotate/flip) image
 
     Args:
         im<np.array>: image array
         k<int|False>: number of 90 degree rotations 
         flip<bool>: flip or don't flip
-
+        random<bool>: if true get augmentation first
     * PYTORCH HACK:
     * - im=im+0
     * - negative stride issue 
     * - https://discuss.pytorch.org/t/torch-from-numpy-not-support-negative-strides/3663/7
     """
+    if random:
+        k, flip=augmentation()
     if k is not False:
         im=np.rot90(im,k,axes=_axes(im.ndim,bands_first))
     if flip is not False:
@@ -161,6 +163,19 @@ def augment(im,k=False,flip=False,bands_first=BANDS_FIRST):
 #
 # HELPERS
 #
+def rgb_rescale(im,bands=None,rgb_max=255,im_max=2500,dtype=np.uint8):
+    if bands:
+        im=im[bands]
+    else:
+        im=im[:3]
+    if im_max:
+        im=im.astype(np.float)*rgb_max/im_max
+    im=im.clip(0,rgb_max)
+    if dtype:
+        im=im.astype(dtype)
+    return im
+
+
 def is_bands_first(im):
     """ checks if image is bands last or bands first
 

@@ -3,7 +3,13 @@ import random
 import numpy as np
 import rasterio as rio
 from rasterio.windows import Window
+from rasterio.enums import Resampling
 from affine import Affine
+#
+# CONSTANTS
+#
+FIRST='first'
+RESAMPLING=Resampling.bilinear
 
 
 #
@@ -53,6 +59,60 @@ def write(im,path,profile,makedirs=True):
     with rio.open(path,'w',**profile) as dst:
         dst.write(im)
         
+
+def read_stack(paths,res_list=None,stack_res=FIRST,resampling=RESAMPLING):
+    """ band-wise read for images
+
+    Args: 
+        - paths<list>: list of source paths (per-band/ordered)
+        - res_list<list|None>: 
+            * list of resolutions.  
+            * if passed will rescale bands to stack_res
+        - stack_res:
+            * resolution to rescale all bands to
+            * if 'first' use the first resolution in res_list
+        - resampling<str>: resampling method
+    """
+    with rio.open(paths[0]) as src:
+        profile = src.profile
+    profile.update(count=len(paths))
+    if res_list:
+        if isinstance(res_list,int):
+            res_list=[res_list]*len(paths)
+        if stack_res is FIRST:
+            stack_res=res_list[0]
+        scale=(stack_res/res_list[0])
+        if scale!=1.0:
+            profile['width']*=scale
+            profile['height']*=scale
+        ims=[scale_read(p,r/stack_res) for p,r in zip(paths,res_list)]
+    else:
+        ims=[read(p) for p in paths]
+    return np.stack(ims), profile
+
+
+def scale_read(path,scale=1,resampling=RESAMPLING,band=1):
+    """ open and rescale image
+    Args: 
+        - path<str>: source path
+        - scale<int|float>: amount to scale image by
+        - resampling<str>: resampling method
+        - band<int|None>: band to read
+    """
+    with rio.open(path) as src:
+        if scale==1:
+            im=src.read(indexes=band)
+        else:
+            im=src.read(
+                indexes=band,
+                out_shape=(int(src.height*scale),int(src.width*scale)),
+                resampling=resampling)
+    return im
+        
+        
+        
+
+
 
 #
 # WINDOW/PROFILE HELPERS
