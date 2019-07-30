@@ -22,6 +22,32 @@ def bounds_from_profile(profile):
     return transform.array_bounds(h,w,a)
 
 
+def profile(
+        crs,
+        transform,
+        width=None,
+        height=None,
+        size=None,
+        count=1,
+        nodata=None,
+        dtype='uint8',
+        compress='lzw'):
+    """ construct profile """
+    if size:
+        width=height=size
+    return {
+        'crs': geo.get_crs(crs),
+        'transform': transform,
+        'width': width,
+        'height': height,
+        'count': count,
+        'nodata': nodata,
+        'dtype': dtype,
+        'compress': compress,
+        'driver': 'GTiff',
+        'interleave': 'pixel' }
+
+
 
 #
 # WINDOW HELPERS
