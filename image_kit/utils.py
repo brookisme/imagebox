@@ -1,4 +1,18 @@
 import rasterio.transform as transform
+from rasterio.crs import CRS
+
+
+def get_crs(crs,as_dict=False):
+    if isinstance(crs,int):
+        crs_dict={'init':f'epsg:{crs}'}
+    elif isinstance(crs,str):
+        crs_dict={'init':crs}
+    else:
+        return crs
+    if as_dict:
+        return crs_dict
+    else:
+        return CRS(crs_dict)
 
 
 def crs_res_bounds(profile):
@@ -36,7 +50,7 @@ def profile(
     if size:
         width=height=size
     return {
-        'crs': geo.get_crs(crs),
+        'crs': get_crs(crs),
         'transform': transform,
         'width': width,
         'height': height,
