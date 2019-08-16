@@ -15,7 +15,7 @@ RESAMPLING=Resampling.bilinear
 #
 # READ/WRITE
 #
-def read(path,window=None,window_profile=True,dtype=None):
+def read(path,window=None,window_profile=True,return_profile=True,dtype=None):
     """ read image
     Args: 
         - path<str>: source path
@@ -28,16 +28,20 @@ def read(path,window=None,window_profile=True,dtype=None):
         <tuple> np.array, image-profile
     """
     with rio.open(path,'r') as src:
-        profile=src.profile
+        if return_profile:
+            profile=src.profile
         if window:
             image=src.read(window=Window(*window))
-            if window_profile:
+            if window_profile and return_profile:
                 profile=update_profile(profile,window=window)  
         else:
             image=src.read()
         if dtype:
             image=image.astype(dtype)
-    return image, profile
+    if return_profile:
+        return image, profile
+    else:
+        return image
 
 
 
@@ -87,8 +91,9 @@ def read_stack(paths,res_list=None,stack_res=FIRST,resampling=RESAMPLING):
             profile['height']*=scale
         ims=[scale_read(p,r/stack_res) for p,r in zip(paths,res_list)]
     else:
-        ims=[read(p) for p in paths]
-    return np.stack(ims), profile
+        ims=[read(p,return_profile=False) for p in paths]
+
+    return np.concatenate(ims), profile
 
 
 def scale_read(path,scale=1,resampling=RESAMPLING,band=1):
