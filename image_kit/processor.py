@@ -56,7 +56,7 @@ def normalize(im,means=None,stdevs=None,bands_first=BANDS_FIRST):
     return im/stdevs
 
 
-def denormalize(im,means,stdevs,bands_first=BANDS_FIRST,dtype=np.uint8):
+def denormalize(im,means,stdevs,bands=[0,1,2],bands_first=BANDS_FIRST,dtype=np.uint8):
     """ denormalize image array
     Args:
         im<np.array>: image array
@@ -65,11 +65,11 @@ def denormalize(im,means,stdevs,bands_first=BANDS_FIRST,dtype=np.uint8):
         bands_first<bool>: true if array is bands first
     """ 
     if bands_first:
-        im=im[:3]
-        stdevs=np.array(stdevs[:3])
-        means=np.array(means[:3])
-        stdevs=np.array(stdevs).reshape((im.shape[0],1,1))
-        means=np.array(means).reshape((im.shape[0],1,1))
+        im=im[bands]
+        stdevs=np.array(stdevs)[bands]
+        means=np.array(means)[bands]
+        stdevs=stdevs.reshape((im.shape[0],1,1))
+        means=means.reshape((im.shape[0],1,1))
         im=stdevs*im+means
         return im.astype(dtype)
     else:
