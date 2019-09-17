@@ -141,21 +141,48 @@ def augment(im,k=False,flip=False,bands_first=BANDS_FIRST,random=False):
         k<int|False>: number of 90 degree rotations 
         flip<bool>: flip or don't flip
         random<bool>: if true get augmentation first
+    """
+    if random:
+        k, flip=augmentation()
+    if k is not False:
+        im=rotate(im,k,bands_first=bands_first)
+    if flip is not False:
+        im=flip_image(im,bands_first=bands_first)
+    return im
+
+
+def rotate(im,k,bands_first=BANDS_FIRST):
+    """ rotate image
+    Args:
+        im<np.array>: image array
+        k<int|False>: number of 90 degree rotations
+
     * PYTORCH HACK:
     * - im=im+0
     * - negative stride issue 
     * - https://discuss.pytorch.org/t/torch-from-numpy-not-support-negative-strides/3663/7
     """
-    if random:
-        k, flip=augmentation()
-    if k is not False:
-        im=np.rot90(im,k,axes=_axes(im.ndim,bands_first))
-    if flip is not False:
+    im=np.rot90(im,k,axes=_axes(im.ndim,bands_first))
+    im=im+0
+    return im
+
+
+def flip_image(im,bands_first=BANDS_FIRST,axis=None):
+    """ flip image
+    Args:
+        im<np.array>: image array
+
+    * PYTORCH HACK:
+    * - im=im+0
+    * - negative stride issue 
+    * - https://discuss.pytorch.org/t/torch-from-numpy-not-support-negative-strides/3663/7
+    """
+    if axis is None:
         if (im.ndim==2) or (not bands_first):
-            axis=1
+            axis=0
         else:
-            axis=2
-        im=np.flip(im,axis)
+            axis=1
+    im=np.flip(im,axis)
     im=im+0
     return im
 

@@ -15,7 +15,15 @@ EPS=1e-8
 #
 #****************************************************************
 
-
+BANDS=[
+    'red',
+    'green',
+    'blue',
+    'nir',
+    'red-edge',
+    'swir1',
+    'swir2'
+]
 INDICES={
     'ndvi':(3,0),
     'ndwi':(1,3),
@@ -52,26 +60,52 @@ INDICES={
 }
 
 
+ORDERED='ordered'
+ORDERD_BANDS=[
+    'coastal-aerosol',
+    'blue',
+    'green',
+    'red',
+    'red-edge',
+    'red-edge-2',
+    'red-edge-3',
+    'nir',
+    'red-edge-4',
+    'water-vapor',
+    'cirrus',
+    'swir1',
+    'swir2'
+]
+INDICES_ORDERED={
+    'ndvi':(7,3),
+    'ndwi':(2,7),
+    'ndwi_leaves':(7,11),
+    'ndbi':(11,7),
+    'built_up': ['ndbi','ndvi'],
+}
+
+
+
+
 
 #
 # METHODS
 #
-def index(im,index_name,*normalized_difference_args,**ratio_index_kwargs):
+def index(im,index_name,indices=None):
     """ band index based on name, or ndiff args or ratio-index args
     
     Args:
         im<np.array>: image array
-        index<str|False>: index key from INDICES or False for custom index
-        *normalized_difference_args: args for normalized_difference
-        **ratio_index_kwargs: config or ratio_index
+        index_name<str|False>: index key from INDICES or False for custom index
     """
-    if index_name:
-        args=INDICES[index_name]
-    else:
-        if normalized_difference_args:
-            args=normalized_difference_args
+    if isinstance(indices,str):
+        if indices==ORDERED:
+            indices=INDICES_ORDERED
         else:
-            args=ratio_index_kwargs
+            indices=INDICES
+    elif not indices: 
+        indices=INDICES
+    args=indices[index_name]
     if isinstance(args,dict):
         return ratio_index(im,**args)
     else:

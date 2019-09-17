@@ -35,6 +35,8 @@ class InputTargetHandler(object):
         band_indices<list>:
             - list of arguments for image_kit.indices.index
             - adds band_index bands to image
+        indices_dict<dict>:
+            - preset indices from which to select band_indices
         value_map<dict>: 
             - target value map. 
             - keys: new values
@@ -48,6 +50,10 @@ class InputTargetHandler(object):
             - number of target categories
             - required for to_categorical
         augment<bool>: augment image
+        flip_target/flip_input<bool>: 
+            - flip target/input image before any additional augmentation 
+            - for use when target and input pairs have opposite y-axis orientation
+            - set only one of these to be true
         cropping<int|None>:
             - amount to crop both input and target image when reading the image
         input_cropping<int|None>: 
@@ -71,11 +77,14 @@ class InputTargetHandler(object):
             means=None,
             stdevs=None,
             band_indices=None,
+            indices_dict=None,
             value_map=None,
             default_mapped_value=proc.DEFAULT_VMAP_VALUE,
             to_categorical=False,
             nb_categories=None,
             augment=True,
+            flip_target=False,
+            flip_input=False,
             cropping=None,
             input_cropping=None,
             target_cropping=None,
@@ -92,6 +101,7 @@ class InputTargetHandler(object):
             self.tiller=tiller
         self.input_bands=input_bands
         self.band_indices=band_indices
+        self.indices_dict=indices_dict
         self.value_map=value_map
         self.default_mapped_value=default_mapped_value
         self.means=means
@@ -101,6 +111,8 @@ class InputTargetHandler(object):
         self.to_categorical=to_categorical
         self.nb_categories=nb_categories
         self.augment=augment
+        self.flip_target=flip_target
+        self.flip_input=flip_input
         self.set_augmentation()
         self.cropping=cropping or 0
         self.input_cropping=input_cropping
@@ -119,8 +131,10 @@ class InputTargetHandler(object):
         im,profile=self._read(path)
         im=process_input(
             im,
+            flip=self.flip_input,
             input_bands=self.input_bands,
             band_indices=self.band_indices,
+            indices_dict=self.indices_dict,
             cropping=self.input_cropping,
             means=self.means,
             stdevs=self.stdevs,
@@ -136,6 +150,7 @@ class InputTargetHandler(object):
         im,profile=self._read(path)
         im=process_target(
             im,
+            flip=self.flip_target,
             value_map=self.value_map,
             default_mapped_value=self.default_mapped_value,
             categorical=self.to_categorical,
@@ -226,16 +241,20 @@ class InputTargetHandler(object):
 #
 def process_input(
         im,
+        rotate=False,
+        flip=False,
         input_bands=None,
         band_indices=None,
+        indices_dict=None,
         cropping=None,
         means=None,
         stdevs=None,
         dtype=INPUT_DTYPE):
+    im=proc.augment(im,k=rotate,flip=flip)
     if cropping:
         im=proc.crop(im,cropping)
     if band_indices:
-        index_bands=[indices.index(im,idx) for idx in band_indices]
+        index_bands=[indices.index(im,idx,indices_dict) for idx in band_indices]
     if means is not None:
         if stdevs is None:
             im=proc.center(im,means=means,to_int=False)
@@ -253,12 +272,15 @@ def process_input(
 
 def process_target(
         im,
+        rotate=False,
+        flip=False,
         value_map=None,
         default_mapped_value=proc.DEFAULT_VMAP_VALUE,
         categorical=False,
         nb_categories=None,
         cropping=None,
         dtype=TARGET_DTYPE):
+    im=proc.augment(im,k=rotate,flip=flip)
     if im.ndim==3:
         if proc.is_bands_first(im):
             im=im[0]
