@@ -51,7 +51,6 @@ def read(
                     window=window) 
         if res:
             scale=src.res[0]/res
-            print(res,scale,src.res)
         if scale:
             out_shape=(int(src.height*scale),int(src.width*scale))
         if out_shape and return_profile:
