@@ -1,5 +1,6 @@
 import math
 from random import randint
+from rasterio.enums import Resampling
 import numpy as np
 import image_kit.io as io
 import image_kit.processor as proc
@@ -13,6 +14,8 @@ DEFAULT_SIZE=256
 DEFAULT_OVERLAP=0
 TO_CATEGORICAL_ERROR='image_kit.handler: nb_categories required for to_categorical'
 
+INPUT_RESAMPLING=Resampling.bilinear
+TARGET_RESAMPLING=Resampling.nearest
 
 
 #
@@ -50,10 +53,12 @@ class InputTargetHandler(object):
             - number of target categories
             - required for to_categorical
         augment<bool>: augment image
-        flip_target/flip_input<bool>: 
+        flip_target/input<bool>: 
             - flip target/input image before any additional augmentation 
             - for use when target and input pairs have opposite y-axis orientation
             - set only one of these to be true
+        target/input_resolution: rescale input or target with input/target resampling method
+        input/target_resampling: resampling method for input or target
         cropping<int|None>:
             - amount to crop both input and target image when reading the image
         input_cropping<int|None>: 
@@ -85,6 +90,10 @@ class InputTargetHandler(object):
             augment=True,
             flip_target=False,
             flip_input=False,
+            input_resolution=None,
+            target_resolution=None,
+            input_resampling=INPUT_RESAMPLING,
+            target_resampling=TARGET_RESAMPLING,
             cropping=None,
             input_cropping=None,
             target_cropping=None,
@@ -113,6 +122,10 @@ class InputTargetHandler(object):
         self.augment=augment
         self.flip_target=flip_target
         self.flip_input=flip_input
+        self.input_resolution=input_resolution
+        self.target_resolution=target_resolution
+        self.input_resampling=input_resampling
+        self.target_resampling=target_resampling
         self.set_augmentation()
         self.cropping=cropping or 0
         self.input_cropping=input_cropping
@@ -128,7 +141,10 @@ class InputTargetHandler(object):
 
     def input(self,path,return_profile=False):
         self.input_path=path
-        im,profile=self._read(path)
+        im,profile=self._read(
+            path,
+            self.input_resolution,
+            self.target_resampling )
         im=process_input(
             im,
             flip=self.flip_input,
@@ -147,7 +163,10 @@ class InputTargetHandler(object):
 
     def target(self,path,return_profile=False):
         self.target_path=path
-        im,profile=self._read(path)
+        im,profile=self._read(
+            path,
+            self.target_resolution,
+            self.target_resampling )
         im=process_target(
             im,
             flip=self.flip_target,
@@ -192,7 +211,7 @@ class InputTargetHandler(object):
     #
     # INTERNAL METHODS
     #
-    def _read(self,path):
+    def _read(self,path,resolution,resampling):
         if self.tiller:
             window=self.tiller[self.window_index]
         else:
@@ -200,7 +219,11 @@ class InputTargetHandler(object):
             window=None
         window=self._cropping_window(window)
         window=self._float_window(window)
-        return io.read(path,window)
+        return io.read(
+            path,
+            window=window,
+            res=resolution,
+            resampling=resampling)
 
 
     def _cropping_window(self,window):
@@ -242,7 +265,7 @@ class InputTargetHandler(object):
 def process_input(
         im,
         rotate=False,
-        flip=False,
+        flip=False,     
         input_bands=None,
         band_indices=None,
         indices_dict=None,

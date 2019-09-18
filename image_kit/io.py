@@ -21,7 +21,7 @@ def read(
         window_profile=True,
         return_profile=True,
         res=None,
-        scale=False,
+        scale=None,
         out_shape=None,
         bands=None,
         resampling=RESAMPLING,
@@ -33,8 +33,8 @@ def read(
         - window_profile<bool>:
             - if True return profile for the window data
             - else return profile for the src-image
-        - res<int>: rescale to new resolution.
-        - scale<float>: rescale image res=>res*scale
+        - res<int>: rescale to new resolution. overides scale and out_shape
+        - scale<float>: rescale image res=>res*scale overrides out_shape
         - out_shape<tuple>: (h,w) rescales image. overwritten by res and scale
         - dtype<str>:
     Returns:
@@ -50,7 +50,8 @@ def read(
                     profile,
                     window=window) 
         if res:
-            scale=res/src.res[0]
+            scale=src.res[0]/res
+            print(res,scale,src.res)
         if scale:
             out_shape=(int(src.height*scale),int(src.width*scale))
         if out_shape and return_profile:
@@ -66,7 +67,6 @@ def read(
         return image, profile
     else:
         return image
-
 
 
 def write(im,path,profile,makedirs=True):
