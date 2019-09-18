@@ -15,7 +15,17 @@ RESAMPLING=Resampling.bilinear
 #
 # READ/WRITE
 #
-def read(path,window=None,window_profile=True,return_profile=True,dtype=None):
+def read(
+        path,
+        window=None,
+        window_profile=True,
+        return_profile=True,
+        res=None,
+        scale=False,
+        out_shape=None,
+        bands=None,
+        resampling=RESAMPLING,
+        dtype=None):
     """ read image
     Args: 
         - path<str>: source path
@@ -23,6 +33,9 @@ def read(path,window=None,window_profile=True,return_profile=True,dtype=None):
         - window_profile<bool>:
             - if True return profile for the window data
             - else return profile for the src-image
+        - res<int>: rescale to new resolution.
+        - scale<float>: rescale image res=>res*scale
+        - out_shape<tuple>: (h,w) rescales image. overwritten by res and scale
         - dtype<str>:
     Returns:
         <tuple> np.array, image-profile
@@ -31,11 +44,22 @@ def read(path,window=None,window_profile=True,return_profile=True,dtype=None):
         if return_profile:
             profile=src.profile
         if window:
-            image=src.read(window=Window(*window))
+            window=Window(*window)
             if window_profile and return_profile:
-                profile=update_profile(profile,window=window)  
-        else:
-            image=src.read()
+                profile=update_profile(
+                    profile,
+                    window=window) 
+        if res:
+            scale=res/src.res[0]
+        if scale:
+            out_shape=(int(src.height*scale),int(src.width*scale))
+        if out_shape and return_profile:
+            profile=rescale_profile(profile,out_shape)
+        image=src.read(
+                indexes=bands,
+                window=window,
+                out_shape=out_shape,
+                resampling=resampling )
         if dtype:
             image=image.astype(dtype)
     if return_profile:
@@ -89,34 +113,12 @@ def read_stack(paths,res_list=None,stack_res=FIRST,resampling=RESAMPLING):
         if scale!=1.0:
             profile['width']*=scale
             profile['height']*=scale
-        ims=[scale_read(p,r/stack_res) for p,r in zip(paths,res_list)]
+        ims=[ read(p,scale=r/stack_res,band=1,resampling=resampling) 
+              for p,r in zip(paths,res_list) ]
     else:
         ims=[read(p,return_profile=False) for p in paths]
 
-    return np.concatenate(ims), profile
-
-
-def scale_read(path,scale=1,resampling=RESAMPLING,band=1):
-    """ open and rescale image
-    Args: 
-        - path<str>: source path
-        - scale<int|float>: amount to scale image by
-        - resampling<str>: resampling method
-        - band<int|None>: band to read
-    """
-    with rio.open(path) as src:
-        if scale==1:
-            im=src.read(indexes=band)
-        else:
-            im=src.read(
-                indexes=band,
-                out_shape=(int(src.height*scale),int(src.width*scale)),
-                resampling=resampling)
-    return im
-        
-        
-        
-
+    return np.concatenate(ims), profile        
 
 
 #
@@ -150,8 +152,15 @@ def update_profile(
     return profile
 
 
-
-
+def rescale_profile(profile,out_shape):
+    affine=profile['transform']
+    h_out,w_out=out_shape
+    h,w=profile['height'],profile['width']
+    res_y=int(affine.e*h_out/h)
+    res_x=int(affine.a*w_out/w)
+    profile['transform']=Affine(res_x, 0.0, affine.c,0.0, res_y, affine.f)
+    profile['height'],profile['width']=h_out,w_out
+    return profile
 
 
 
