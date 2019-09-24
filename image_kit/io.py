@@ -155,8 +155,8 @@ def rescale_profile(profile,out_shape):
     affine=profile['transform']
     h_out,w_out=out_shape
     h,w=profile['height'],profile['width']
-    res_y=int(affine.e*h_out/h)
-    res_x=int(affine.a*w_out/w)
+    res_y=int(affine.e*h/h_out)
+    res_x=int(affine.a*w/w_out)
     profile['transform']=Affine(res_x, 0.0, affine.c,0.0, res_y, affine.f)
     profile['height'],profile['width']=h_out,w_out
     return profile
