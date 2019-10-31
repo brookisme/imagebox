@@ -58,12 +58,13 @@ class InputTargetHandler(object):
             - set only one of these to be true
         target/input_resolution: rescale input or target with input/target resampling method
         input/target_resampling: resampling method for input or target
+        padding|input/target_padding<int|None>: 
+            - amount to pad images|input/target-image after processing the image
+            - will be ignored if there is cropping
         cropping<int|None>:
             - amount to crop both input and target image when reading the image
-        input_cropping<int|None>: 
-            - amount to crop input image after processing the image
-        target_cropping<int|None>: 
-            - amount to crop target image after processing the image
+        input/target_cropping<int|None>: 
+            - amount to crop input/target image after processing the image
         float_cropping<int|None>: 
             remove pixels from h/w of input and target starting at random i,j
         width<int|None>: image width (required if float cropping and not tiller)
@@ -93,10 +94,15 @@ class InputTargetHandler(object):
             target_resolution=None,
             input_resampling=INPUT_RESAMPLING,
             target_resampling=TARGET_RESAMPLING,
+            padding=None,
+            input_padding=None,
+            target_padding=None,
+            input_padding_value=0,
+            target_padding_value=0,
+            float_cropping=None,           
             cropping=None,
             input_cropping=None,
             target_cropping=None,
-            float_cropping=None,
             width=None,
             height=None,
             tiller=None,
@@ -126,6 +132,10 @@ class InputTargetHandler(object):
         self.input_resampling=input_resampling
         self.target_resampling=target_resampling
         self.set_augmentation()
+        self.input_padding=input_padding or padding
+        self.target_padding=target_padding or padding
+        self.input_padding_value=input_padding_value
+        self.target_padding_value=target_padding_value
         self.cropping=cropping or 0
         self.input_cropping=input_cropping
         self.target_cropping=target_cropping
@@ -150,6 +160,8 @@ class InputTargetHandler(object):
             input_bands=self.input_bands,
             band_indices=self.band_indices,
             indices_dict=self.indices_dict,
+            padding=self.input_padding,
+            padding_value=self.input_padding_value,
             cropping=self.input_cropping,
             means=self.means,
             stdevs=self.stdevs,
@@ -173,6 +185,8 @@ class InputTargetHandler(object):
             default_mapped_value=self.default_mapped_value,
             categorical=self.to_categorical,
             nb_categories=self.nb_categories,
+            padding=self.target_padding,
+            padding_value=self.target_padding_value,
             cropping=self.target_cropping,
             dtype=self.target_dtype )
         return self._return_data(
@@ -268,6 +282,8 @@ def process_input(
         input_bands=None,
         band_indices=None,
         indices_dict=None,
+        padding=None,
+        padding_value=0,
         cropping=None,
         means=None,
         stdevs=None,
@@ -289,6 +305,8 @@ def process_input(
             im=np.vstack([index_bands])
         else:
             im=np.vstack([im,index_bands])
+    if (not cropping) and padding:
+        im=proc.pad(im,padding=padding,value=padding_value)
     return im.astype(dtype)
 
 
@@ -300,6 +318,8 @@ def process_target(
         default_mapped_value=proc.DEFAULT_VMAP_VALUE,
         categorical=False,
         nb_categories=None,
+        padding=None,
+        padding_value=0,
         cropping=None,
         dtype=TARGET_DTYPE):
     im=proc.augment(im,k=rotate,flip=flip)
@@ -314,6 +334,8 @@ def process_target(
         im=proc.to_categorical(im,nb_categories)
     if cropping:
         im=proc.crop(im,cropping)
+    elif padding:
+        im=proc.pad(im,padding=padding,value=padding_value)
     return im.astype(dtype)
 
 

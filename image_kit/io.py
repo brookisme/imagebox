@@ -132,7 +132,14 @@ def update_profile(
         window=None):
     """ new profile based on original profile and window """
     if window:
-        col_off, row_off, width, height=window
+        if isinstance(window,rio.windows.Window):
+            col_off, row_off, width, height=(
+                window.col_off,
+                window.row_off,
+                window.width,
+                window.height )
+        else:
+            col_off, row_off, width, height=window
     affine=profile['transform']
     res=affine.a
     x0=affine.c

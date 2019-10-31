@@ -116,6 +116,42 @@ def crop(im,cropping):
         return im[cropping:-cropping]
 
 
+def pad(im,padding=1,axes=None,value=0):
+    """ pad image along axes
+    * im<np.array>: image to pad
+    * axes<None|int|tuple>: 
+        - axis or axes to pad
+        - if None assume bands last
+    * padding<int|tuple>: number of pixes to pad by. tuple for have asymmetric padding
+    * value<number>: constant value to pad with
+    """
+    if isinstance(axes,int):
+        axes=(axes)
+    elif axes is None:
+        if im.ndim==4:
+            axes=(2,3)
+        elif im.ndim==3:
+            axes=(1,2)
+        elif im.ndim==2:
+            axes=(0,1)
+        elif im.ndim==1:
+            axes=(0)
+    def pad_tupl(axis,pad_tupl):
+        if axis in axes:
+            return pad_tupl
+        else:
+            return (0,0)
+    if isinstance(padding,int):
+        width=(padding,padding)
+    else:
+        width=padding
+    return np.pad(
+        im,
+        pad_width=[pad_tupl(im,width) for im in range(im.ndim)],
+        mode='constant',
+        constant_values=value)
+
+
 def augmentation(k=None,flip=None):
     """ get k(rotation), flip values for image augmentation
 

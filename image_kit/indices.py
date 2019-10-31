@@ -6,8 +6,6 @@ BANDS_FIRST=True
 EPS=1e-8
 
 
-
-
 #****************************************************************
 #
 # IMPORTANT NOTE: band index definition based on band order
