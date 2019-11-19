@@ -127,6 +127,7 @@ def normalized_difference(im,band_1,band_2,bands_first=BANDS_FIRST):
         Returns:
             <arr>: (b1-b2)/(b1+b2)
     """
+    im=im.astype(np.float)
     if bands_first:
         band_1=im[band_1]
         band_2=im[band_2]
@@ -180,6 +181,7 @@ def linear_combo(im,bands,coefs=None,constant=None,bands_first=BANDS_FIRST):
         Returns:
             <np.array>: image_bands dot coefs + constant
     """
+    im=im.astype(np.float)
     if not constant:
         constant=0
     if isinstance(bands,int):
