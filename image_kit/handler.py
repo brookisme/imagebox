@@ -108,6 +108,9 @@ class InputTargetHandler(object):
             tiller=None,
             tiller_config={},
             target_expand_axis=None,
+            input_processor=None,
+            target_processor=None,
+            target_squeeze=True,
             input_dtype=INPUT_DTYPE,
             target_dtype=TARGET_DTYPE ):
         if tiller is True:
@@ -146,6 +149,9 @@ class InputTargetHandler(object):
         self.set_float_window()
         self.set_window()
         self.target_expand_axis=target_expand_axis
+        self.input_processor=input_processor
+        self.target_processor=target_processor
+        self.target_squeeze=target_squeeze
         self.input_dtype=input_dtype
         self.target_dtype=target_dtype
 
@@ -167,6 +173,7 @@ class InputTargetHandler(object):
             cropping=self.input_cropping,
             means=self.means,
             stdevs=self.stdevs,
+            processor=self.input_processor,
             dtype=self.input_dtype )
         return self._return_data(
             im,
@@ -191,6 +198,8 @@ class InputTargetHandler(object):
             padding_value=self.target_padding_value,
             cropping=self.target_cropping,
             expand_axis=self.target_expand_axis,
+            processor=self.target_processor,
+            squeeze=self.target_squeeze,
             dtype=self.target_dtype )
         return self._return_data(
             im,
@@ -290,26 +299,30 @@ def process_input(
         cropping=None,
         means=None,
         stdevs=None,
+        processor=None,
         dtype=INPUT_DTYPE):
-    im=proc.augment(im,k=rotate,flip=flip)
-    if cropping:
-        im=proc.crop(im,cropping)
-    if band_indices:
-        index_bands=[indices.index(im,idx,indices_dict) for idx in band_indices]
-    if means is not None:
-        if stdevs is None:
-            im=proc.center(im,means=means,to_int=False)
-        else:
-            im=proc.normalize(im,means=means,stdevs=stdevs)
-    if input_bands:
-        im=im[input_bands]
-    if band_indices:
-        if input_bands is False:
-            im=np.vstack([index_bands])
-        else:
-            im=np.vstack([im,index_bands])
-    if (not cropping) and padding:
-        im=proc.pad(im,padding=padding,value=padding_value)
+    if processor:
+        im=processor(im)
+    else:
+        im=proc.augment(im,k=rotate,flip=flip)
+        if cropping:
+            im=proc.crop(im,cropping)
+        if band_indices:
+            index_bands=[indices.index(im,idx,indices_dict) for idx in band_indices]
+        if means is not None:
+            if stdevs is None:
+                im=proc.center(im,means=means,to_int=False)
+            else:
+                im=proc.normalize(im,means=means,stdevs=stdevs)
+        if input_bands:
+            im=im[input_bands]
+        if band_indices:
+            if input_bands is False:
+                im=np.vstack([index_bands])
+            else:
+                im=np.vstack([im,index_bands])
+        if (not cropping) and padding:
+            im=proc.pad(im,padding=padding,value=padding_value)
     return im.astype(dtype)
 
 
@@ -325,25 +338,27 @@ def process_target(
         padding_value=0,
         cropping=None,
         expand_axis=None,
+        processor=None,
+        squeeze=True,
         dtype=TARGET_DTYPE):
-    im=proc.augment(im,k=rotate,flip=flip)
-    if im.ndim==3:
-        if proc.is_bands_first(im):
-            im=im[0]
-        else:
-            im[:,:,0]
-    if value_map:
-        im=proc.map_values(im,value_map)
-    if categorical:
-        im=proc.to_categorical(im,nb_categories)
-    if cropping:
-        im=proc.crop(im,cropping)
-    elif padding:
-        im=proc.pad(im,padding=padding,value=padding_value)
-    if expand_axis is not None:
-        if expand_axis is True:
-            expand_axis=0
-        im=np.expand_dims(im,axis=expand_axis)
+    if processor:
+        im=processor(im)
+    else:
+        im=proc.augment(im,k=rotate,flip=flip)
+        if squeeze:
+            im=np.squeeze(im)
+        if value_map:
+            im=proc.map_values(im,value_map)
+        if categorical:
+            im=proc.to_categorical(im,nb_categories)
+        if cropping:
+            im=proc.crop(im,cropping)
+        elif padding:
+            im=proc.pad(im,padding=padding,value=padding_value)
+        if expand_axis is not None:
+            if expand_axis is True:
+                expand_axis=0
+            im=np.expand_dims(im,axis=expand_axis)
     return im.astype(dtype)
 
 
