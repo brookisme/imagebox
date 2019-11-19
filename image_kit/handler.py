@@ -107,6 +107,7 @@ class InputTargetHandler(object):
             height=None,
             tiller=None,
             tiller_config={},
+            target_expand_axis=None,
             input_dtype=INPUT_DTYPE,
             target_dtype=TARGET_DTYPE ):
         if tiller is True:
@@ -144,6 +145,7 @@ class InputTargetHandler(object):
         self.height=height
         self.set_float_window()
         self.set_window()
+        self.target_expand_axis=target_expand_axis
         self.input_dtype=input_dtype
         self.target_dtype=target_dtype
 
@@ -188,6 +190,7 @@ class InputTargetHandler(object):
             padding=self.target_padding,
             padding_value=self.target_padding_value,
             cropping=self.target_cropping,
+            expand_axis=self.target_expand_axis,
             dtype=self.target_dtype )
         return self._return_data(
             im,
@@ -321,6 +324,7 @@ def process_target(
         padding=None,
         padding_value=0,
         cropping=None,
+        expand_axis=None,
         dtype=TARGET_DTYPE):
     im=proc.augment(im,k=rotate,flip=flip)
     if im.ndim==3:
@@ -336,6 +340,10 @@ def process_target(
         im=proc.crop(im,cropping)
     elif padding:
         im=proc.pad(im,padding=padding,value=padding_value)
+    if expand_axis is not None:
+        if expand_axis is True:
+            expand_axis=0
+        im=np.expand_dims(im,axis=expand_axis)
     return im.astype(dtype)
 
 

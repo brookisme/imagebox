@@ -88,7 +88,8 @@ def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
             else use default value for unmapped values
     """
     if default_value==IMAGE:
-        mapped_im=im.copy()
+
+        mapped_im=np.array(im).copy()
     else:
         mapped_im=np.full_like(im,default_value)
     for k,v in value_map.items():
@@ -103,17 +104,23 @@ def to_categorical(im,nb_categories):
     return np.eye(nb_categories)[:,im]
 
 
-def crop(im,cropping):
-    """ crop image
-    """
-    if im.ndim==4:
-        return im[:,:,cropping:-cropping,cropping:-cropping]
-    elif im.ndim==3:
-        return im[:,cropping:-cropping,cropping:-cropping]    
-    elif im.ndim==2:
-        return im[cropping:-cropping,cropping:-cropping]
-    elif im.ndim==1:
-        return im[cropping:-cropping]
+def crop(im,cropping,bands_first=BANDS_FIRST):
+    """ crop image """
+    if bands_first:
+        if im.ndim==4:
+            return im[:,:,cropping:-cropping,cropping:-cropping]
+        elif im.ndim==3:
+            return im[:,cropping:-cropping,cropping:-cropping]    
+        elif im.ndim==2:
+            return im[cropping:-cropping,cropping:-cropping]
+        elif im.ndim==1:
+            return im[cropping:-cropping]
+    else:
+        if im.ndim>=2:
+            return im[cropping:-cropping,cropping:-cropping]
+        else:
+            return im[cropping:-cropping]
+
 
 
 def pad(im,padding=1,axes=None,value=0):
@@ -226,11 +233,29 @@ def flip_image(im,bands_first=BANDS_FIRST,axis=None):
 #
 # HELPERS
 #
-def rgb_rescale(im,bands=None,rgb_max=255,im_max=2500,dtype=np.uint8):
-    if bands:
-        im=im[bands]
+def rgb_rescale(
+        im,
+        bands=None,
+        rgb_max=255,
+        im_max=2500,
+        dtype=np.uint8,
+        bands_first=BANDS_FIRST):
+    if bands_first:
+        if bands:
+            im=im[bands]
+        else:
+            im=im[:3]
     else:
-        im=im[:3]
+        if im.ndim==4:
+            if bands:
+                im=im[:,:,:,bands]
+            else:
+                im=im[:,:,:,:3]
+        else:
+            if bands:
+                im=im[:,:,bands]
+            else:
+                im=im[:,:,:3]
     if im_max:
         im=im.astype(np.float)*rgb_max/im_max
     im=im.clip(0,rgb_max)
