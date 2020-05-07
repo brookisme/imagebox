@@ -103,8 +103,10 @@ class InputTargetHandler(object):
             cropping=None,
             input_cropping=None,
             target_cropping=None,
+            window_index=None,
             width=None,
             height=None,
+            example_path=None,
             tiller=None,
             tiller_config={},
             target_expand_axis=None,
@@ -144,10 +146,11 @@ class InputTargetHandler(object):
         self.input_cropping=input_cropping
         self.target_cropping=target_cropping
         self.float_cropping=float_cropping
-        self.width=width
-        self.height=height
-        self.set_float_window()
-        self.set_window()
+        self.set_window(
+            window_index=window_index,
+            width=width,
+            height=height,
+            example_path=example_path)
         self.target_expand_axis=target_expand_axis
         self.input_preprocess=input_preprocess
         self.target_preprocess=target_preprocess
@@ -174,7 +177,6 @@ class InputTargetHandler(object):
             cropping=self.input_cropping,
             means=self.means,
             stdevs=self.stdevs,
-            preprocess=self.input_preprocess,
             dtype=self.input_dtype )
         return self._return_data(
             im,
@@ -216,64 +218,60 @@ class InputTargetHandler(object):
             self.flip=False
     
 
-    def set_window(self,window_index=None):
+    def set_window(self,window_index=None,width=None,height=None,example_path=None):
+        self._set_dimensions(width,height,example_path)
         if self.tiller:
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
-            self.window_index=window_index
+            self.window_index=window_index            
+            window=self.tiller[self.window_index]
         else:
             self.window_index=False
-
-
-    def set_float_window(self):
-        if self.float_cropping:
+            window=None
+        if self.cropping:
+            window=self._shift_crop_window(window,crop=self.cropping)
+        elif self.float_cropping:
             self.float_x=randint(0,2*self.float_cropping)
             self.float_y=randint(0,2*self.float_cropping)
-        else:
-            self.float_x=False
-            self.float_y=False
+            window=self._shift_crop_window(
+                window,
+                dx=self.float_x,
+                dy=self.float_y,
+                crop=self.float_cropping)
+        self.window=window
+            
     
-
     #
     # INTERNAL METHODS
     #
     def _read(self,path,resolution,resampling):
-        if self.tiller:
-            window=self.tiller[self.window_index]
-        else:
-            self._set_dimensions(path)
-            window=None
-        window=self._cropping_window(window)
-        window=self._float_window(window)
         return io.read(
             path,
-            window=window,
+            window=self.window,
             res=resolution,
             resampling=resampling)
 
 
-    def _cropping_window(self,window):
-        if window:
-            window=window[0]+self.cropping,window[1]+self.cropping,window[2]-2*self.cropping,window[3]-2*self.cropping
-        elif self.cropping:
-            window=self.cropping,self.cropping,self.width-2*self.cropping,self.height-2*self.cropping
-        return window
+    def _shift_crop_window(self,window=None,dx=0,dy=0,crop=0):
+        if not window:
+            window=(0,0,self.width,self.height)
+        x=window[0]+dx
+        y=window[1]+dx
+        w=window[2]-2*crop
+        h=window[3]-2*crop
+        return x,y,w,h
 
 
-    def _float_window(self,window):
-        if window and self.float_cropping:
-            x=window[0]+self.float_x
-            y=window[1]+self.float_y
-            w=window[2]-2*self.float_cropping
-            h=window[3]-2*self.float_cropping
-            window=x,y,w,h
-        return window
-
-
-    def _set_dimensions(self,path):
-        if not (self.width and self.height):
-            tmp,_=io.read(path)
-            self.height,self.width=tmp.shape[1:]
+    def _set_dimensions(self,width,height,example_path):
+        self.float_x=False
+        self.float_y=False
+        if not (width and height):
+            if example_path:
+                height,width=io.read(example_path,return_profile=False).shape[1:]
+            elif self.cropping or self.float_cropping:
+                raise ValueError('io.handler: width and height, or example_path, required for (float)cropping')
+        self.width=width
+        self.height=height
 
 
     def _return_data(self,im,profile,return_profile):
