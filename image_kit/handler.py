@@ -146,10 +146,10 @@ class InputTargetHandler(object):
         self.input_cropping=input_cropping
         self.target_cropping=target_cropping
         self.float_cropping=float_cropping
+        self.width=width
+        self.height=height
         self.set_window(
             window_index=window_index,
-            width=width,
-            height=height,
             example_path=example_path)
         self.target_expand_axis=target_expand_axis
         self.input_preprocess=input_preprocess
@@ -218,8 +218,8 @@ class InputTargetHandler(object):
             self.flip=False
     
 
-    def set_window(self,window_index=None,width=None,height=None,example_path=None):
-        self._set_dimensions(width,height,example_path)
+    def set_window(self,window_index=None,example_path=None):
+        self._ensure_dimensions(example_path)
         if self.tiller:
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
@@ -245,6 +245,7 @@ class InputTargetHandler(object):
     # INTERNAL METHODS
     #
     def _read(self,path,resolution,resampling):
+        print(self.window,path)
         return io.read(
             path,
             window=self.window,
@@ -262,16 +263,14 @@ class InputTargetHandler(object):
         return x,y,w,h
 
 
-    def _set_dimensions(self,width,height,example_path):
-        self.float_x=False
-        self.float_y=False
-        if not (width and height):
+    def _ensure_dimensions(self,example_path):
+        if not (self.width and self.height):
+            self.float_x=False
+            self.float_y=False
             if example_path:
-                height,width=io.read(example_path,return_profile=False).shape[1:]
+                self.height,self.width=io.read(example_path,return_profile=False).shape[1:]
             elif self.cropping or self.float_cropping:
                 raise ValueError('io.handler: width and height, or example_path, required for (float)cropping')
-        self.width=width
-        self.height=height
 
 
     def _return_data(self,im,profile,return_profile):
