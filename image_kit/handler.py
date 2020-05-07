@@ -245,7 +245,6 @@ class InputTargetHandler(object):
     # INTERNAL METHODS
     #
     def _read(self,path,resolution,resampling):
-        print(self.window,path)
         return io.read(
             path,
             window=self.window,
