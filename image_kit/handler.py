@@ -92,6 +92,7 @@ class InputTargetHandler(object):
             flip_input=False,
             input_resolution=None,
             target_resolution=None,
+            input_bounds=None,
             input_resampling=INPUT_RESAMPLING,
             target_resampling=TARGET_RESAMPLING,
             padding=None,
@@ -135,6 +136,7 @@ class InputTargetHandler(object):
         self.flip_input=flip_input
         self.input_resolution=input_resolution
         self.target_resolution=target_resolution
+        self.input_bounds=input_bounds
         self.input_resampling=input_resampling
         self.target_resampling=target_resampling
         self.set_augmentation()
@@ -175,6 +177,7 @@ class InputTargetHandler(object):
             padding=self.input_padding,
             padding_value=self.input_padding_value,
             cropping=self.input_cropping,
+            bounds=self.input_bounds,
             means=self.means,
             stdevs=self.stdevs,
             dtype=self.input_dtype )
@@ -229,7 +232,11 @@ class InputTargetHandler(object):
             self.window_index=False
             window=None
         if self.cropping:
-            window=self._shift_crop_window(window,crop=self.cropping)
+            window=self._shift_crop_window(
+                window,
+                dx=self.cropping,
+                dy=self.cropping,
+                ds=self.cropping)
         elif self.float_cropping:
             self.float_x=randint(0,2*self.float_cropping)
             self.float_y=randint(0,2*self.float_cropping)
@@ -237,7 +244,7 @@ class InputTargetHandler(object):
                 window,
                 dx=self.float_x,
                 dy=self.float_y,
-                crop=self.float_cropping)
+                ds=2*self.float_cropping)
         self.window=window
             
     
@@ -252,13 +259,13 @@ class InputTargetHandler(object):
             resampling=resampling)
 
 
-    def _shift_crop_window(self,window=None,dx=0,dy=0,crop=0):
+    def _shift_crop_window(self,window=None,dx=0,dy=0,ds=0):
         if not window:
             window=(0,0,self.width,self.height)
         x=window[0]+dx
-        y=window[1]+dx
-        w=window[2]-2*crop
-        h=window[3]-2*crop
+        y=window[1]+dy
+        w=window[2]-ds
+        h=window[3]-ds
         return x,y,w,h
 
 
@@ -294,6 +301,7 @@ def process_input(
         padding=None,
         padding_value=0,
         cropping=None,
+        bounds=None,
         means=None,
         stdevs=None,
         preprocess=None,
@@ -319,6 +327,10 @@ def process_input(
             im=np.vstack([im,index_bands])
     if (not cropping) and padding:
         im=proc.pad(im,padding=padding,value=padding_value)
+    if bounds:
+        for i,b in bounds.items():
+            i=int(i)
+            im[i]=im[i].clip(min=b.get('min'),max=b.get('max'))
     return im.astype(dtype)
 
 
