@@ -1,8 +1,8 @@
 import numpy as np
+from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 #
 # CONSTANTS
 # 
-BANDS_FIRST=True
 EPS=1e-8
 
 
@@ -201,4 +201,12 @@ def linear_combo(im,bands,coefs=None,constant=None,bands_first=BANDS_FIRST):
     return im+constant
 
 
+def shadow_mask(im,band_bounds=[77,77,87],max_diff=25,bands=[0,1,2],blueness=6):
+    bbnds=[]
+    for b,bnd in zip(bands,band_bounds):
+        bbnds.append(im[b]<=bnd)
+    bbnds=np.array(bbnds)
+    isblue=im[bands[:-1]].max(axis=0)+blueness<=im[bands[-1]]
+    isgrey=(im[bands[-1]]-im[bands[:-1]].min(axis=0))<=max_diff
+    return bbnds.all(axis=0)*isblue*isgrey
 

@@ -5,6 +5,9 @@ import numpy as np
 import image_kit.io as io
 import image_kit.processor as proc
 import image_kit.indices as indices
+from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+
+
 #
 # CONSTANTS
 # 
@@ -236,7 +239,7 @@ class InputTargetHandler(object):
                 window,
                 dx=self.cropping,
                 dy=self.cropping,
-                ds=self.cropping)
+                crop=self.cropping)
         elif self.float_cropping:
             self.float_x=randint(0,2*self.float_cropping)
             self.float_y=randint(0,2*self.float_cropping)
@@ -244,9 +247,9 @@ class InputTargetHandler(object):
                 window,
                 dx=self.float_x,
                 dy=self.float_y,
-                ds=2*self.float_cropping)
+                crop=self.float_cropping)
         self.window=window
-            
+
     
     #
     # INTERNAL METHODS
@@ -259,13 +262,13 @@ class InputTargetHandler(object):
             resampling=resampling)
 
 
-    def _shift_crop_window(self,window=None,dx=0,dy=0,ds=0):
+    def _shift_crop_window(self,window=None,dx=0,dy=0,crop=0):
         if not window:
             window=(0,0,self.width,self.height)
         x=window[0]+dx
         y=window[1]+dy
-        w=window[2]-ds
-        h=window[3]-ds
+        w=window[2]-2*crop
+        h=window[3]-2*crop
         return x,y,w,h
 
 
@@ -274,7 +277,11 @@ class InputTargetHandler(object):
             self.float_x=False
             self.float_y=False
             if example_path:
-                self.height,self.width=io.read(example_path,return_profile=False).shape[1:]
+                shape=io.read(example_path,return_profile=False).shape
+                if BANDS_FIRST:
+                    self.height,self.width=shape[1:]
+                else:
+                    self.height,self.width=shape[:2]
             elif self.cropping or self.float_cropping:
                 raise ValueError('io.handler: width and height, or example_path, required for (float)cropping')
 

@@ -1,5 +1,7 @@
 import random
 import numpy as np
+from scipy.signal import convolve2d
+from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 #
 # CONSTANTS
 #
@@ -7,10 +9,9 @@ IMAGE='image'
 DEFAULT_VMAP_VALUE=IMAGE
 BANDS_FIRST_AXES=(1,2)
 BANDS_LAST_AXES=(0,1)
-BANDS_FIRST=True
 DENORM_ERROR='image_kit.processor.denormalize: bands last not yet implemented'
 SWAP_BANDS_ERROR='image_kit.processor._swap_bands_axes: im.ndim must be 3 or 4'
-
+SMOOTHING_KERNEL=np.ones((3,3))
 
 
 #
@@ -88,7 +89,6 @@ def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
             else use default value for unmapped values
     """
     if default_value==IMAGE:
-
         mapped_im=np.array(im).copy()
     else:
         mapped_im=np.full_like(im,default_value)
@@ -102,6 +102,16 @@ def to_categorical(im,nb_categories):
     map single band int valued images to multi-band binary value image
     """
     return np.eye(nb_categories)[:,im]
+
+
+
+def categorical_smoothing(im,nb_categories,kernel=SMOOTHING_KERNEL):
+    """ smooth categorical inputs
+    """
+    im=to_categorical(im,nb_categories)
+    for i in range(nb_categories):
+        im[i]=convolve2d(im[i],kernel,mode='same')
+    return im.argmax(axis=0)
 
 
 def crop(im,cropping,bands_first=BANDS_FIRST):
@@ -309,9 +319,9 @@ def _axes(ndim,bands_first):
 def _swap_bands_axes(im):
     ndim=im.ndim
     if ndim==3:
-        im=im.swapaxes(0,1).swapaxes(1,2)
+        im=im.transpose(1,2,0)
     elif ndim==4:
-        im=im.swapaxes(1,2).swapaxes(2,3)
+        im=im.transpose(0,2,3,1)
     else:
         raise ValueError(SWAP_BANDS_ERROR)
     return im

@@ -1,0 +1,6 @@
+import os
+
+FIRST='first'
+LAST='last'
+BAND_ORDERING=os.environ.get('IMAGE_KIT_BAND_ORDERING',FIRST)
+BANDS_FIRST=BAND_ORDERING==FIRST

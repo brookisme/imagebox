@@ -5,12 +5,12 @@ import rasterio as rio
 from rasterio.windows import Window
 from rasterio.enums import Resampling
 from affine import Affine
+from config import FIRST, LAST, BAND_ORDERING
+from . import utils
 #
 # CONSTANTS
 #
-FIRST='first'
 RESAMPLING=Resampling.bilinear
-
 
 #
 # READ/WRITE
@@ -25,6 +25,7 @@ def read(
         out_shape=None,
         bands=None,
         resampling=RESAMPLING,
+        band_ordering=None,
         dtype=None):
     """ read image
     Args: 
@@ -62,6 +63,7 @@ def read(
                 resampling=resampling )
         if dtype:
             image=image.astype(dtype)
+        image=utils.order_bands(image,band_ordering)
     if return_profile:
         return image, profile
     else:
@@ -125,6 +127,7 @@ def read_stack(paths,res_list=None,stack_res=FIRST,resampling=RESAMPLING):
 #
 def update_profile(
         profile,
+        crop=None,
         col_off=None,
         row_off=None,
         width=None,
@@ -140,6 +143,11 @@ def update_profile(
                 window.height )
         else:
             col_off, row_off, width, height=window
+    elif crop:
+        col_off=crop
+        row_off=crop
+        width=profile['width']-2*crop
+        height=profile['height']-2*crop
     affine=profile['transform']
     res=affine.a
     x0=affine.c

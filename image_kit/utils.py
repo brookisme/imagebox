@@ -1,5 +1,7 @@
 import rasterio.transform as transform
 from rasterio.crs import CRS
+from config import FIRST, LAST, BAND_ORDERING
+
 
 
 def get_crs(crs,as_dict=False):
@@ -61,6 +63,16 @@ def profile(
         'driver': 'GTiff',
         'interleave': 'pixel' }
 
+
+#
+# IO
+#
+def order_bands(image,band_ordering=None):
+    if band_ordering is None:
+        band_ordering=BAND_ORDERING 
+    if band_ordering.lower()==LAST:
+        image=image.transpose(1,2,0)
+    return image
 
 
 #
