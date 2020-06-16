@@ -1,5 +1,5 @@
 import numpy as np
-from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+from image_kit.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 #
 # CONSTANTS
 # 

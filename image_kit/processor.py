@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from scipy.signal import convolve2d
-from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+from image_kit.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 #
 # CONSTANTS
 #

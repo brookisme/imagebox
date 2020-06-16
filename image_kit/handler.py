@@ -5,7 +5,7 @@ import numpy as np
 import image_kit.io as io
 import image_kit.processor as proc
 import image_kit.indices as indices
-from config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+from image_kit.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 
 
 #
