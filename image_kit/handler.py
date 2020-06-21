@@ -108,6 +108,7 @@ class InputTargetHandler(object):
             input_cropping=None,
             target_cropping=None,
             window_index=None,
+            size=None,
             width=None,
             height=None,
             example_path=None,
@@ -151,8 +152,12 @@ class InputTargetHandler(object):
         self.input_cropping=input_cropping
         self.target_cropping=target_cropping
         self.float_cropping=float_cropping
-        self.width=width
-        self.height=height
+        if size:
+            self.width=size
+            self.height=size
+        else:
+            self.width=width
+            self.height=height
         self.set_window(
             window_index=window_index,
             example_path=example_path)
