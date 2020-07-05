@@ -169,12 +169,13 @@ class InputTargetHandler(object):
         self.target_dtype=target_dtype
 
 
-    def input(self,path,return_profile=False):
+    def input(self,path,window=None,return_profile=False):
         self.input_path=path
         im,profile=self._read(
             path,
             self.input_resolution,
-            self.target_resampling )
+            self.target_resampling,
+            window )
         im=process_input(
             im,
             preprocess=self.input_preprocess,
@@ -195,12 +196,13 @@ class InputTargetHandler(object):
             return_profile )
 
 
-    def target(self,path,return_profile=False):
+    def target(self,path,window=None,return_profile=False):
         self.target_path=path
         im,profile=self._read(
             path,
             self.target_resolution,
-            self.target_resampling )
+            self.target_resampling,
+            window )
         im=process_target(
             im,
             preprocess=self.target_preprocess,
@@ -259,10 +261,10 @@ class InputTargetHandler(object):
     #
     # INTERNAL METHODS
     #
-    def _read(self,path,resolution,resampling):
+    def _read(self,path,resolution,resampling,window):
         return io.read(
             path,
-            window=self.window,
+            window=window or self.window,
             res=resolution,
             resampling=resampling)
 
