@@ -17,7 +17,7 @@ DEFAULT_SIZE=256
 DEFAULT_OVERLAP=0
 TO_CATEGORICAL_ERROR='image_kit.handler: nb_categories required for to_categorical'
 INPUT_RESAMPLING=Resampling.bilinear
-TARGET_RESAMPLING=Resampling.nearest
+TARGET_RESAMPLING=Resampling.mode
 
 
 #

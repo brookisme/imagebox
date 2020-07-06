@@ -45,15 +45,18 @@ def read(
         if return_profile:
             profile=src.profile
         if window:
+            w,h=window[2], window[3]
             window=Window(*window)
             if window_profile and return_profile:
                 profile=update_profile(
                     profile,
                     window=window) 
+        else:
+            w,h=src.width, src.height
         if res:
             scale=src.res[0]/res
         if scale:
-            out_shape=(int(src.height*scale),int(src.width*scale))
+            out_shape=(int(h*scale),int(w*scale))
         if out_shape and return_profile:
             profile=rescale_profile(profile,out_shape)
         image=src.read(
