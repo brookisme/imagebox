@@ -1,6 +1,6 @@
-### Image Kit: python utilities for working with multispectral imagery 
+### ImageBox: python utilities for working with multispectral imagery 
 
-ImageKit contains four main modules:
+ImageBox contains four main modules:
 
 - [io](#io): a rasterio wrapper for reading/writing imagery. Simplifies reading windows by returning a window specific profile
 - [processor](#processor): a number of methods for processing images such as normalization, mapping categorical values, augmentation, etc.

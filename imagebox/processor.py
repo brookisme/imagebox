@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from scipy.signal import convolve2d
-from image_kit.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+from imagebox.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 #
 # CONSTANTS
 #
@@ -9,8 +9,8 @@ IMAGE='image'
 DEFAULT_VMAP_VALUE=IMAGE
 BANDS_FIRST_AXES=(1,2)
 BANDS_LAST_AXES=(0,1)
-DENORM_ERROR='image_kit.processor.denormalize: bands last not yet implemented'
-SWAP_BANDS_ERROR='image_kit.processor._swap_bands_axes: im.ndim must be 3 or 4'
+DENORM_ERROR='imagebox.processor.denormalize: bands last not yet implemented'
+SWAP_BANDS_ERROR='imagebox.processor._swap_bands_axes: im.ndim must be 3 or 4'
 SMOOTHING_KERNEL=np.ones((3,3))
 
 

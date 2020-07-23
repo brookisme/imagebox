@@ -5,7 +5,7 @@ import rasterio as rio
 from rasterio.windows import Window
 from rasterio.enums import Resampling
 from affine import Affine
-from image_kit.config import FIRST, LAST, BAND_ORDERING
+from imagebox.config import FIRST, LAST, BAND_ORDERING
 from . import utils
 #
 # CONSTANTS

@@ -1,6 +1,6 @@
 import rasterio.transform as transform
 from rasterio.crs import CRS
-from image_kit.config import FIRST, LAST, BAND_ORDERING
+from imagebox.config import FIRST, LAST, BAND_ORDERING
 
 
 

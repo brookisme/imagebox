@@ -2,10 +2,10 @@ import math
 from random import randint
 from rasterio.enums import Resampling
 import numpy as np
-import image_kit.io as io
-import image_kit.processor as proc
-import image_kit.indices as indices
-from image_kit.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
+import imagebox.io as io
+import imagebox.processor as proc
+import imagebox.indices as indices
+from imagebox.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
 
 
 #
@@ -15,7 +15,7 @@ INPUT_DTYPE=np.float
 TARGET_DTYPE=np.int64
 DEFAULT_SIZE=256
 DEFAULT_OVERLAP=0
-TO_CATEGORICAL_ERROR='image_kit.handler: nb_categories required for to_categorical'
+TO_CATEGORICAL_ERROR='imagebox.handler: nb_categories required for to_categorical'
 INPUT_RESAMPLING=Resampling.bilinear
 TARGET_RESAMPLING=Resampling.mode
 
@@ -38,7 +38,7 @@ class InputTargetHandler(object):
             - if means and not stdevs: center input around means
             - if means and stdevs normalize inputs
         band_indices<list>:
-            - list of arguments for image_kit.indices.index
+            - list of arguments for imagebox.indices.index
             - adds band_index bands to image
         indices_dict<dict>:
             - preset indices from which to select band_indices

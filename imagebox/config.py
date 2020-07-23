@@ -3,7 +3,7 @@ import yaml
 #
 # CONSTANTS
 #
-IMAGE_KIT_CONFIG_FILE=f'{os.getcwd()}/image_kit.config.yaml'
+IMAGE_KIT_CONFIG_FILE=f'{os.getcwd()}/imagebox.config.yaml'
 FIRST='first'
 LAST='last'
 NOISY=os.environ.get('IMAGE_KIT_NOISE',False)

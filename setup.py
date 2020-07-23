@@ -1,13 +1,13 @@
 from distutils.core import setup
 setup(
-  name = 'image_kit',
-  packages = ['image_kit'],
+  name = 'imagebox',
+  packages = ['imagebox'],
   version = '0.0.0.1',
-  description = 'Image Kit: python utilities for working with multispectral imagery',
+  description = 'ImageBox: python utilities for working with multispectral imagery',
   author = 'Brookie Guzder-Williams',
   author_email = 'brook.williams@gmail.com',
-  url = 'https://github.com/brookisme/image_kit',
-  download_url = 'https://github.com/brookisme/image_kit/tarball/0.1',
+  url = 'https://github.com/brookisme/imagebox',
+  download_url = 'https://github.com/brookisme/imagebox/tarball/0.1',
   keywords = ['python','geotiff','rasterio','image','io'],
   include_package_data=True,
   data_files=[
