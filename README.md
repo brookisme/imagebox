@@ -14,8 +14,8 @@ ImageBox contains four main modules:
 ##### INSTALL
 
 ```bash
-git clone https://github.com/brookisme/image_kit.git
-cd image_kit
+git clone https://github.com/brookisme/imagebox.git
+cd imagebox
 pip install -e .
 ```
 
