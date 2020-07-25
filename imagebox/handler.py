@@ -333,7 +333,10 @@ def process_input(
         else:
             im=proc.normalize(im,means=means,stdevs=stdevs)
     if input_bands:
-        im=im[input_bands]
+        if BANDS_FIRST:
+            im=im[input_bands]
+        else:
+            im=im[:,:,input_bands]
     if band_indices:
         if input_bands is False:
             im=np.vstack([index_bands])
