@@ -247,7 +247,7 @@ class InputTargetHandler(object):
                 dx=self.cropping,
                 dy=self.cropping,
                 crop=self.cropping)
-        elif self.float_cropping:
+        if self.float_cropping:
             self.float_x=randint(0,2*self.float_cropping)
             self.float_y=randint(0,2*self.float_cropping)
             window=self._shift_crop_window(
