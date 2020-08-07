@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'imagebox',
   packages = ['imagebox'],
-  version = '0.0.0.5',
+  version = '0.0.0.6',
   description = 'ImageBox: python utilities for working with multispectral imagery',
   author = 'Brookie Guzder-Williams',
   author_email = 'brook.williams@gmail.com',
