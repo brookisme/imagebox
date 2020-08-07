@@ -338,10 +338,16 @@ def process_input(
         else:
             im=im[:,:,input_bands]
     if band_indices:
-        if input_bands is False:
-            im=np.vstack([index_bands])
+        if BANDS_FIRST:
+            if input_bands is False:
+                im=np.vstack([index_bands])
+            else:
+                im=np.vstack([im,index_bands])
         else:
-            im=np.vstack([im,index_bands])
+            if input_bands is False:
+                im=np.dstack(index_bands)
+            else:
+                im=np.dstack([im]+index_bands)
     if (not cropping) and padding:
         im=proc.pad(im,padding=padding,value=padding_value)
     if bounds:
