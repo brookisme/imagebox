@@ -65,16 +65,19 @@ def denormalize(im,means,stdevs,bands=[0,1,2],bands_first=BANDS_FIRST,dtype=np.u
         stdevs<np.array|list>: stdevs
         bands_first<bool>: true if array is bands first
     """ 
-    if bands_first:
-        im=im[bands]
-        stdevs=np.array(stdevs)[bands]
-        means=np.array(means)[bands]
-        stdevs=stdevs.reshape((im.shape[0],1,1))
-        means=means.reshape((im.shape[0],1,1))
-        im=stdevs*im+means
-        return im.astype(dtype)
+    if not bands_first:
+        im=im[:,:,bands]
+        im=im.transpose(2,0,1)
     else:
-        raise NotImplementedError(DENORM_ERROR)
+        im=im[bands]
+    stdevs=np.array(stdevs)[bands]
+    means=np.array(means)[bands]
+    stdevs=stdevs.reshape((im.shape[0],1,1))
+    means=means.reshape((im.shape[0],1,1))
+    im=stdevs*im+means
+    if not bands_first:
+        im=im.transpose(1,2,0)
+    return im.astype(dtype)
 
 
 def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
