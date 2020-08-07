@@ -82,8 +82,25 @@ INDICES_ORDERED={
     'built_up': ['ndbi','ndvi'],
 }
 
-
-
+S2_1020='s2_1020'
+S2_1020_BANDS=[
+    'B2',
+    'B3',
+    'B4',
+    'B5',
+    'B6',
+    'B7',
+    'B8',
+    'B11',
+    'B12'
+]
+INDICES_S2_1020={
+    'ndvi':(6,2),
+    'ndwi':(1,6),
+    'ndwi_leaves':(6,8),
+    'ndbi':(8,6),
+    'built_up': ['ndbi','ndvi'],
+}
 
 
 #
@@ -99,6 +116,8 @@ def index(im,index_name,indices=None):
     if isinstance(indices,str):
         if indices==ORDERED:
             indices=INDICES_ORDERED
+        elif indices==S2_1020:
+            indices=INDICES_S2_1020
         else:
             indices=INDICES
     elif not indices: 
