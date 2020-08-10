@@ -195,7 +195,6 @@ class InputTargetHandler(object):
             indices_dict=self.indices_dict,
             padding=self.input_padding,
             padding_value=self.input_padding_value,
-            cropping=self.input_cropping,
             bounds=self.input_bounds,
             means=self.means,
             stdevs=self.stdevs,
@@ -223,7 +222,6 @@ class InputTargetHandler(object):
             nb_categories=self.nb_categories,
             padding=self.target_padding,
             padding_value=self.target_padding_value,
-            cropping=self.target_cropping,
             expand_axis=self.target_expand_axis,
             squeeze=self.target_squeeze,
             dtype=self.target_dtype )
