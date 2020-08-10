@@ -245,33 +245,36 @@ class InputTargetHandler(object):
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
             self.window_index=window_index            
-            window=self.tiller[self.window_index]
+            target_window=self.tiller[self.window_index]
+            input_window=target_window
         else:
             self.window_index=False
-            window=None
+            input_window=0,0,self.input_width,self.input_height
+            target_window=0,0,self.target_width,self.target_height
         self.input_window=self._shift_crop_window(
-                window,
+                input_window,
                 dx=self.input_cropping,
                 dy=self.input_cropping,
                 crop=self.input_cropping)
         self.target_window=self._shift_crop_window(
-                window,
+                target_window,
                 dx=self.target_cropping,
                 dy=self.target_cropping,
                 crop=self.target_cropping)
         if self.float_cropping:
             self.float_x=self._random_delta()
-            self.float_y=self._random_delta()
+            self.float_y=self._random_delta()            
             self.input_window=self._shift_crop_window(
                     self.input_window,
                     dx=self.float_x,
                     dy=self.float_y,
                     crop=self.float_cropping )
+            tfc=self._target_rescale(self.float_cropping)
             self.target_window=self._shift_crop_window(
                     self.target_window,
                     dx=self._target_rescale(self.float_x),
                     dy=self._target_rescale(self.float_y),
-                    crop=self.float_cropping )
+                    crop=self._target_rescale(self.float_cropping) )
 
 
     
@@ -291,19 +294,19 @@ class InputTargetHandler(object):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
         self.safe_rescale=safe_rescale
-        print(cropping,self.input_cropping,self.target_ratio)
+        if size:
+            self.input_width=size
+            self.input_height=size
+        else:
+            self.input_width=width
+            self.input_height=height
+        self.target_width=self._target_rescale(self.input_width)
+        self.target_height=self._target_rescale(self.input_height)
         if self.input_cropping and (target_cropping=='auto'):
             self.target_cropping=self._target_rescale(self.input_cropping)
         else:
             self.target_cropping=target_cropping
         self.float_cropping=float_cropping
-        print(self.input_cropping,self.target_cropping)
-        if size:
-            self.width=size
-            self.height=size
-        else:
-            self.width=width
-            self.height=height
 
 
     def _target_rescale(self,value):
@@ -324,12 +327,10 @@ class InputTargetHandler(object):
 
 
     def _random_delta(self):
-        return int(randint(0,2*self.float_cropping*self.target_ratio)/self.target_ratio)
+        return randint(0,2*int(self.float_cropping*self.target_ratio))
 
 
-    def _shift_crop_window(self,window=None,dx=0,dy=0,crop=0):
-        if not window:
-            window=(0,0,self.width,self.height)
+    def _shift_crop_window(self,window,dx=0,dy=0,crop=0):
         if dx or dy or crop:
             x=window[0]+dx
             y=window[1]+dy
@@ -341,15 +342,15 @@ class InputTargetHandler(object):
 
 
     def _ensure_dimensions(self,example_path):
-        if not (self.width and self.height):
+        if not (self.input_width and self.input_height):
             self.float_x=False
             self.float_y=False
             if example_path:
                 shape=io.read(example_path,return_profile=False).shape
                 if BANDS_FIRST:
-                    self.height,self.width=shape[1:]
+                    self.input_height,self.input_width=shape[1:]
                 else:
-                    self.height,self.width=shape[:2]
+                    self.input_height,self.input_width=shape[:2]
             elif self.input_cropping or self.target_cropping or self.float_cropping:
                 raise ValueError(DIMS_REQUIRED_ERROR)
 
