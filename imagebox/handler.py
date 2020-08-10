@@ -15,10 +15,18 @@ INPUT_DTYPE=np.float
 TARGET_DTYPE=np.int64
 DEFAULT_SIZE=256
 DEFAULT_OVERLAP=0
-TO_CATEGORICAL_ERROR='imagebox.handler: nb_categories required for to_categorical'
 INPUT_RESAMPLING=Resampling.bilinear
 TARGET_RESAMPLING=Resampling.mode
-
+TO_CATEGORICAL_ERROR=(
+    'imagebox.handler: '
+    'nb_categories required for to_categorical' )
+SAFE_RESCALE_ERROR=(
+    'imagebox.handler: '
+    'target rescale leads to fractional value. '
+    'use safe_rescale=False to force' )
+DIMS_REQUIRED_ERROR=(
+    'imagebox.handler: '
+    'width and height, or example_path, required for (float)cropping' )
 
 #
 # InputTargetHandler
@@ -104,9 +112,11 @@ class InputTargetHandler(object):
             input_padding_value=0,
             target_padding_value=0,
             float_cropping=None,           
+            target_ratio=1,
+            safe_rescale=True,
             cropping=None,
             input_cropping=None,
-            target_cropping=None,
+            target_cropping='auto',
             window_index=None,
             size=None,
             width=None,
@@ -148,16 +158,16 @@ class InputTargetHandler(object):
         self.target_padding=target_padding or padding
         self.input_padding_value=input_padding_value
         self.target_padding_value=target_padding_value
-        self.cropping=cropping or 0
-        self.input_cropping=input_cropping
-        self.target_cropping=target_cropping
-        self.float_cropping=float_cropping
-        if size:
-            self.width=size
-            self.height=size
-        else:
-            self.width=width
-            self.height=height
+        self._set_cropping_and_dims(
+            cropping,
+            target_ratio,
+            safe_rescale,
+            input_cropping,
+            target_cropping,
+            float_cropping,
+            size,
+            width,
+            height)
         self.set_window(
             window_index=window_index,
             example_path=example_path)
@@ -175,7 +185,7 @@ class InputTargetHandler(object):
             path,
             self.input_resolution,
             self.target_resampling,
-            window )
+            window or self.input_window )
         im=process_input(
             im,
             preprocess=self.input_preprocess,
@@ -202,7 +212,7 @@ class InputTargetHandler(object):
             path,
             self.target_resolution,
             self.target_resampling,
-            window )
+            window or self.target_window )
         im=process_target(
             im,
             preprocess=self.target_preprocess,
@@ -241,42 +251,93 @@ class InputTargetHandler(object):
         else:
             self.window_index=False
             window=None
-        if self.cropping:
-            window=self._shift_crop_window(
+        self.input_window=self._shift_crop_window(
                 window,
-                dx=self.cropping,
-                dy=self.cropping,
-                crop=self.cropping)
+                dx=self.input_cropping,
+                dy=self.input_cropping,
+                crop=self.input_cropping)
+        self.target_window=self._shift_crop_window(
+                window,
+                dx=self.target_cropping,
+                dy=self.target_cropping,
+                crop=self.target_cropping)
         if self.float_cropping:
-            self.float_x=randint(0,2*self.float_cropping)
-            self.float_y=randint(0,2*self.float_cropping)
-            window=self._shift_crop_window(
-                window,
-                dx=self.float_x,
-                dy=self.float_y,
-                crop=self.float_cropping)
-        self.window=window
+            self.float_x=self._random_delta()
+            self.float_y=self._random_delta()
+            self.input_window=self._shift_crop_window(
+                    self.input_window,
+                    dx=self.float_x,
+                    dy=self.float_y,
+                    crop=self.float_cropping )
+            self.target_window=self._shift_crop_window(
+                    self.target_window,
+                    dx=self._target_rescale(self.float_x),
+                    dy=self._target_rescale(self.float_y),
+                    crop=self.float_cropping )
+
 
     
     #
     # INTERNAL METHODS
     #
+    def _set_cropping_and_dims(self,
+            cropping,
+            target_ratio,
+            safe_rescale,
+            input_cropping,
+            target_cropping,
+            float_cropping,
+            size,
+            width,
+            height):
+        self.target_ratio=target_ratio or 1
+        self.input_cropping=input_cropping or cropping or 0
+        self.safe_rescale=safe_rescale
+        if input_cropping and (target_cropping=='auto'):
+            self.target_cropping=self._target_rescale(input_cropping)
+        else:
+            self.target_cropping=target_cropping
+        self.float_cropping=float_cropping
+        if size:
+            self.width=size
+            self.height=size
+        else:
+            self.width=width
+            self.height=height
+
+
+    def _target_rescale(self,value):
+        fval=value*self.target_ratio
+        val=round(fval)
+        if (not self.safe_rescale) or (val==fval):
+            return val
+        else:
+            raise ValueError(SAFE_RESCALE_ERROR)
+
+
     def _read(self,path,resolution,resampling,window):
         return io.read(
             path,
-            window=window or self.window,
+            window=window,
             res=resolution,
             resampling=resampling)
+
+
+    def _random_delta(self):
+        return int(randint(0,2*self.float_cropping*self.target_ratio)/self.target_ratio)
 
 
     def _shift_crop_window(self,window=None,dx=0,dy=0,crop=0):
         if not window:
             window=(0,0,self.width,self.height)
-        x=window[0]+dx
-        y=window[1]+dy
-        w=window[2]-2*crop
-        h=window[3]-2*crop
-        return x,y,w,h
+        if dx or dy or crop:
+            x=window[0]+dx
+            y=window[1]+dy
+            w=window[2]-2*crop
+            h=window[3]-2*crop
+            return x,y,w,h
+        else:
+            return window
 
 
     def _ensure_dimensions(self,example_path):
@@ -289,8 +350,8 @@ class InputTargetHandler(object):
                     self.height,self.width=shape[1:]
                 else:
                     self.height,self.width=shape[:2]
-            elif self.cropping or self.float_cropping:
-                raise ValueError('io.handler: width and height, or example_path, required for (float)cropping')
+            elif self.input_cropping or self.target_cropping or self.float_cropping:
+                raise ValueError(DIMS_REQUIRED_ERROR)
 
 
     def _return_data(self,im,profile,return_profile):
