@@ -291,11 +291,13 @@ class InputTargetHandler(object):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
         self.safe_rescale=safe_rescale
-        if input_cropping and (target_cropping=='auto'):
-            self.target_cropping=self._target_rescale(input_cropping)
+        print(cropping,self.input_cropping,self.target_ratio)
+        if self.input_cropping and (target_cropping=='auto'):
+            self.target_cropping=self._target_rescale(self.input_cropping)
         else:
             self.target_cropping=target_cropping
         self.float_cropping=float_cropping
+        print(self.input_cropping,self.target_cropping)
         if size:
             self.width=size
             self.height=size
