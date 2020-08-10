@@ -167,10 +167,9 @@ class InputTargetHandler(object):
             float_cropping,
             size,
             width,
-            height)
-        self.set_window(
-            window_index=window_index,
-            example_path=example_path)
+            height,
+            example_path)
+        self.set_window(window_index=window_index)
         self.target_expand_axis=target_expand_axis
         self.input_preprocess=input_preprocess
         self.target_preprocess=target_preprocess
@@ -240,7 +239,6 @@ class InputTargetHandler(object):
     
 
     def set_window(self,window_index=None,example_path=None):
-        self._ensure_dimensions(example_path)
         if self.tiller:
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
@@ -290,7 +288,8 @@ class InputTargetHandler(object):
             float_cropping,
             size,
             width,
-            height):
+            height,
+            example_path):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
         self.safe_rescale=safe_rescale
@@ -300,6 +299,7 @@ class InputTargetHandler(object):
         else:
             self.input_width=width
             self.input_height=height
+        self._ensure_dimensions(example_path)
         self.target_width=self._target_rescale(self.input_width)
         self.target_height=self._target_rescale(self.input_height)
         if self.input_cropping and (target_cropping=='auto'):
@@ -343,8 +343,6 @@ class InputTargetHandler(object):
 
     def _ensure_dimensions(self,example_path):
         if not (self.input_width and self.input_height):
-            self.float_x=False
-            self.float_y=False
             if example_path:
                 shape=io.read(example_path,return_profile=False).shape
                 if BANDS_FIRST:
