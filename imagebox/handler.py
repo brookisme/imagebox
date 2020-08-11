@@ -111,6 +111,7 @@ class InputTargetHandler(object):
             target_padding=None,
             input_padding_value=0,
             target_padding_value=0,
+            stop_floating=False,
             float_cropping=None,           
             target_ratio=1,
             safe_rescale=True,
@@ -165,6 +166,7 @@ class InputTargetHandler(object):
             input_cropping,
             target_cropping,
             float_cropping,
+            stop_floating,
             size,
             width,
             height,
@@ -286,6 +288,7 @@ class InputTargetHandler(object):
             input_cropping,
             target_cropping,
             float_cropping,
+            stop_floating,
             size,
             width,
             height,
@@ -302,11 +305,15 @@ class InputTargetHandler(object):
         self._ensure_dimensions(example_path)
         self.target_width=self._target_rescale(self.input_width)
         self.target_height=self._target_rescale(self.input_height)
+        if stop_floating:
+            self.input_cropping+=float_cropping
+            self.float_cropping=False
+        else:
+            self.float_cropping=float_cropping
         if self.input_cropping and (target_cropping=='auto'):
             self.target_cropping=self._target_rescale(self.input_cropping)
         else:
             self.target_cropping=target_cropping
-        self.float_cropping=float_cropping
 
 
     def _target_rescale(self,value):
