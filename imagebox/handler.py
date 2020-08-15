@@ -312,8 +312,10 @@ class InputTargetHandler(object):
             self.float_cropping=float_cropping
         if self.input_cropping and (target_cropping=='auto'):
             self.target_cropping=self._target_rescale(self.input_cropping)
-        else:
+        elif isinstance(target_cropping,(int,float)):
             self.target_cropping=target_cropping
+        else:
+            self.target_cropping=None
 
 
     def _target_rescale(self,value):
