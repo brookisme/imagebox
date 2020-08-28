@@ -295,6 +295,7 @@ class InputTargetHandler(object):
             example_path):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
+        float_cropping=float_cropping or 0
         self.safe_rescale=safe_rescale
         if size:
             self.input_width=size
