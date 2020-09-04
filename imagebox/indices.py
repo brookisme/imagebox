@@ -103,6 +103,29 @@ INDICES_S2_1020={
 }
 
 
+
+LSAT_SR='lsat_sr'
+LSAT_SR_BANDS=[
+    'B1', #Band 1 (ultra blue) surface reflectance     0.435-0.451 μm  0.0001
+    'B2', #Band 2 (blue) surface reflectance       0.452-0.512 μm  0.0001
+    'B3', #Band 3 (green) surface reflectance      0.533-0.590 μm  0.0001
+    'B4', #Band 4 (red) surface reflectance        0.636-0.673 μm  0.0001
+    'B5', #Band 5 (near infrared) surface reflectance      0.851-0.879 μm  0.0001
+    'B6', #Band 6 (shortwave infrared 1) surface reflectance       1.566-1.651 μm  0.0001
+    'B7', #Band 7 (shortwave infrared 2) surface reflectance       2.107-2.294 μm  0.0001
+    'B10', #Band 10 brightness temperature. This band, while originally collected with a resolution of 100m / pixel, has been resampled using cubic convolution to 30m. Kelvin  10.60-11.19 μm  0.1
+    'B11', #Band 11 brightness temperature. This band, while originally collected with a resolution of 100m / pixel, has been resampled using cubic convolution to 30m. Kelvin  11.50-12.51 μm  0.1
+]
+INDICES_LSAT_SR={
+    'ndvi':(4,3),
+    'ndwi':(2,4),
+    'ndwi_leaves':(4,5),
+    'ndbi':(5,4),
+    'built_up': ['ndbi','ndvi'],   
+}
+
+
+
 #
 # METHODS
 #

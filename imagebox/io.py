@@ -48,9 +48,9 @@ def read(
             w,h=window[2], window[3]
             window=Window(*window)
             if window_profile and return_profile:
-                profile=update_profile(
-                    profile,
-                    window=window) 
+                profile['transform']=src.window_transform(window)
+                profile['width']=w
+                profile['height']=h
         else:
             w,h=src.width, src.height
         if res:
@@ -128,47 +128,6 @@ def read_stack(paths,res_list=None,stack_res=FIRST,resampling=RESAMPLING):
 #
 # WINDOW/PROFILE HELPERS
 #
-def update_profile(
-        profile,
-        crop=None,
-        col_off=None,
-        row_off=None,
-        width=None,
-        height=None,
-        window=None):
-    """ new profile based on original profile and window """
-    if window:
-        if isinstance(window,rio.windows.Window):
-            col_off, row_off, width, height=(
-                window.col_off,
-                window.row_off,
-                window.width,
-                window.height )
-        else:
-            col_off, row_off, width, height=window
-    elif crop:
-        col_off=crop
-        row_off=crop
-        width=profile['width']-2*crop
-        height=profile['height']-2*crop
-    affine=profile['transform']
-    res=affine.a
-    x0=affine.c
-    y0=affine.f
-    deltax=col_off*res
-    deltay=row_off*res
-    xmin=x0+deltax
-    ymin=y0-deltay
-    affine=Affine(res, 0.0, xmin,0.0, -res, ymin)
-    profile=profile.copy()
-    if width: profile['width']=width
-    if height: profile['height']=height
-    profile['transform']=affine
-    profile['blockxsize']=min(width,profile.get('blockxsize',0))
-    profile['blockysize']=min(height,profile.get('blockysize',0))
-    return profile
-
-
 def rescale_profile(profile,out_shape):
     affine=profile['transform']
     h_out,w_out=out_shape
