@@ -76,8 +76,9 @@ class InputTargetHandler(object):
             - amount to crop both input and target image when reading the image
         input/target_cropping<int|None>: 
             - amount to crop input/target image after processing the image
-        float_cropping<int|None>: 
-            remove pixels from h/w of input and target starting at random i,j
+        float_cropping<int|float|None>: 
+            - remove pixels from h/w of input and target starting at random i,j.
+            - 2*float_cropping must be int
         width<int|None>: image width (required if float cropping and not tiller)
         height<int|None>: image height (required if float cropping and not tiller)
         tiller<Tiller|True|None>:
@@ -240,7 +241,7 @@ class InputTargetHandler(object):
             self.flip=False
     
 
-    def set_window(self,window_index=None,example_path=None):
+    def set_window(self,window=None,window_index=None,example_path=None):
         if self.tiller:
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
@@ -249,8 +250,12 @@ class InputTargetHandler(object):
             input_window=target_window
         else:
             self.window_index=False
-            input_window=0,0,self.input_width,self.input_height
-            target_window=0,0,self.target_width,self.target_height
+            if window:
+                input_window=window
+                target_window=window
+            else:
+                input_window=0,0,self.input_width,self.input_height
+                target_window=0,0,self.target_width,self.target_height
         self.input_window=self._shift_crop_window(
                 input_window,
                 dx=self.input_cropping,
@@ -263,13 +268,12 @@ class InputTargetHandler(object):
                 crop=self.target_cropping)
         if self.float_cropping:
             self.float_x=self._random_delta()
-            self.float_y=self._random_delta()            
+            self.float_y=self._random_delta()
             self.input_window=self._shift_crop_window(
                     self.input_window,
                     dx=self.float_x,
                     dy=self.float_y,
                     crop=self.float_cropping )
-            tfc=self._target_rescale(self.float_cropping)
             self.target_window=self._shift_crop_window(
                     self.target_window,
                     dx=self._target_rescale(self.float_x),
@@ -296,6 +300,8 @@ class InputTargetHandler(object):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
         float_cropping=float_cropping or 0
+        if not (2*float_cropping).is_integer():
+            raise ValueError('`2*float_cropping` must be int')
         self.safe_rescale=safe_rescale
         if size:
             self.input_width=size
@@ -320,12 +326,15 @@ class InputTargetHandler(object):
 
 
     def _target_rescale(self,value):
-        fval=value*self.target_ratio
-        val=round(fval)
-        if (not self.safe_rescale) or (val==fval):
-            return val
+        if self.target_ratio==1:
+            return value
         else:
-            raise ValueError(SAFE_RESCALE_ERROR)
+            fval=value*self.target_ratio
+            val=round(fval)
+            if (not self.safe_rescale) or (val==fval):
+                return val
+            else:
+                raise ValueError(SAFE_RESCALE_ERROR)
 
 
     def _read(self,path,resolution,resampling,window):
@@ -346,7 +355,7 @@ class InputTargetHandler(object):
             y=window[1]+dy
             w=window[2]-2*crop
             h=window[3]-2*crop
-            return x,y,w,h
+            return int(x),int(y),int(w),int(h)
         else:
             return window
 
