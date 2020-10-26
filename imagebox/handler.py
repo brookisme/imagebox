@@ -242,7 +242,10 @@ class InputTargetHandler(object):
     
 
     def set_window(self,window=None,window_index=None,example_path=None):
-        if self.tiller:
+        if window:
+            input_window=window
+            target_window=window
+        elif self.tiller:
             if window_index is None:
                 window_index=randint(0,len(self.tiller)-1)
             self.window_index=window_index            
@@ -250,12 +253,8 @@ class InputTargetHandler(object):
             input_window=target_window
         else:
             self.window_index=False
-            if window:
-                input_window=window
-                target_window=window
-            else:
-                input_window=0,0,self.input_width,self.input_height
-                target_window=0,0,self.target_width,self.target_height
+            input_window=0,0,self.input_width,self.input_height
+            target_window=0,0,self.target_width,self.target_height
         self.input_window=self._shift_crop_window(
                 input_window,
                 dx=self.input_cropping,
