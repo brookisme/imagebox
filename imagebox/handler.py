@@ -299,7 +299,7 @@ class InputTargetHandler(object):
         self.target_ratio=target_ratio or 1
         self.input_cropping=input_cropping or cropping or 0
         float_cropping=float_cropping or 0
-        if not (2*float_cropping).is_integer():
+        if not float(2*float_cropping).is_integer():
             raise ValueError('`2*float_cropping` must be int')
         self.safe_rescale=safe_rescale
         if size:
