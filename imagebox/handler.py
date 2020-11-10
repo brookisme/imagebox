@@ -2,11 +2,11 @@ import math
 from random import randint
 from rasterio.enums import Resampling
 import numpy as np
+import gcs_helpers.fetch as gfetch
 import imagebox.io as io
 import imagebox.processor as proc
 import imagebox.indices as indices
 from imagebox.config import FIRST, LAST, BAND_ORDERING, BANDS_FIRST
-
 
 #
 # CONSTANTS
@@ -130,6 +130,7 @@ class InputTargetHandler(object):
             input_preprocess=None,
             target_preprocess=None,
             target_squeeze=True,
+            read_from_gcs=False,
             input_dtype=INPUT_DTYPE,
             target_dtype=TARGET_DTYPE ):
         if tiller is True:
@@ -177,6 +178,7 @@ class InputTargetHandler(object):
         self.input_preprocess=input_preprocess
         self.target_preprocess=target_preprocess
         self.target_squeeze=target_squeeze
+        self.read_from_gcs=read_from_gcs
         self.input_dtype=input_dtype
         self.target_dtype=target_dtype
 
@@ -337,11 +339,20 @@ class InputTargetHandler(object):
 
 
     def _read(self,path,resolution,resampling,window):
-        return io.read(
-            path,
-            window=window,
-            res=resolution,
-            resampling=resampling)
+        if self.read_from_gcs:
+            im,p=gfetch.image(
+                path=path,
+                window=window,
+                res=resolution,
+                resampling=resampling,
+                band_ordering=BAND_ORDERING)
+        else:
+            im,p=io.read(
+                path,
+                window=window,
+                res=resolution,
+                resampling=resampling)
+        return im,p
 
 
     def _random_delta(self):
