@@ -91,6 +91,8 @@ def map_values(im,value_map,default_value=DEFAULT_VMAP_VALUE):
             if default_value is 'image' use image values for unmapped values
             else use default value for unmapped values
     """
+    value_map=value_map.copy()
+    default_value=value_map.pop('.default',default_value)
     if default_value==IMAGE:
         mapped_im=np.array(im).copy()
     else:
