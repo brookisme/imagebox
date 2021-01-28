@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'imagebox',
   packages = ['imagebox'],
-  version = '0.0.0.15',
+  version = '0.0.0.16',
   description = 'ImageBox: python utilities for working with multispectral imagery',
   author = 'Brookie Guzder-Williams',
   author_email = 'brook.williams@gmail.com',
@@ -14,6 +14,14 @@ setup(
     (
       'config',[]
     )
+  ],
+  install_requires=[
+    'numpy',
+    'rasterio',
+    'pyyaml',
+    'affine',
+    'rasterio',
+    'gcs_helpers>=0.0.0.22'
   ],
   classifiers = [],
   entry_points={
