@@ -282,7 +282,6 @@ class InputTargetHandler(object):
                     crop=self._target_rescale(self.float_cropping) )
 
 
-    
     #
     # INTERNAL METHODS
     #
@@ -323,7 +322,7 @@ class InputTargetHandler(object):
         elif isinstance(target_cropping,(int,float)):
             self.target_cropping=target_cropping
         else:
-            self.target_cropping=None
+            self.target_cropping=cropping or 0
 
 
     def _target_rescale(self,value):
