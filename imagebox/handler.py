@@ -183,7 +183,7 @@ class InputTargetHandler(object):
         self.target_dtype=target_dtype
 
 
-    def input(self,path,window=None,return_profile=False):
+    def input(self,path,window=None,means=None,stdevs=None,return_profile=False):
         self.input_path=path
         im,profile=self._read(
             path,
@@ -200,8 +200,8 @@ class InputTargetHandler(object):
             padding=self.input_padding,
             padding_value=self.input_padding_value,
             bounds=self.input_bounds,
-            means=self.means,
-            stdevs=self.stdevs,
+            means=means or self.means,
+            stdevs=stdevs or self.stdevs,
             dtype=self.input_dtype )
         return self._return_data(
             im,
