@@ -190,6 +190,11 @@ class InputTargetHandler(object):
             self.input_resolution,
             self.target_resampling,
             window or self.input_window )
+        if means is None:
+            means=self.means
+        if stdevs is None:
+            stdevs=self.stdevs
+
         im=process_input(
             im,
             preprocess=self.input_preprocess,
@@ -200,8 +205,8 @@ class InputTargetHandler(object):
             padding=self.input_padding,
             padding_value=self.input_padding_value,
             bounds=self.input_bounds,
-            means=means or self.means,
-            stdevs=stdevs or self.stdevs,
+            means=means,
+            stdevs=stdevs,
             dtype=self.input_dtype )
         return self._return_data(
             im,
