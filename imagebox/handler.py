@@ -141,6 +141,7 @@ class InputTargetHandler(object):
         self.band_indices=band_indices
         self.indices_dict=indices_dict
         self.value_map=value_map
+        self.list_value_map=isinstance(value_map,list)
         self.default_mapped_value=default_mapped_value
         self.means=means
         self.stdevs=stdevs
@@ -226,6 +227,7 @@ class InputTargetHandler(object):
             preprocess=self.target_preprocess,
             flip=self.flip_target,
             value_map=self.value_map,
+            list_value_map=self.list_value_map,
             default_mapped_value=self.default_mapped_value,
             categorical=self.to_categorical,
             nb_categories=self.nb_categories,
@@ -234,10 +236,10 @@ class InputTargetHandler(object):
             expand_axis=self.target_expand_axis,
             squeeze=self.target_squeeze,
             dtype=self.target_dtype )
-        return self._return_data(
-            im,
-            profile,
-            return_profile )
+        if self.value_map and self.list_value_map:
+            return [self._return_data(o,profile,False) for o in im]
+        else:
+            return self._return_data(im,profile,return_profile)
 
 
     def set_augmentation(self,k=None,flip=None):
@@ -457,6 +459,7 @@ def process_target(
         rotate=False,
         flip=False,
         value_map=None,
+        list_value_map=False,
         default_mapped_value=proc.DEFAULT_VMAP_VALUE,
         categorical=False,
         nb_categories=None,
@@ -472,6 +475,44 @@ def process_target(
     im=proc.augment(im,k=rotate,flip=flip)
     if squeeze:
         im=np.squeeze(im)
+    if value_map and list_value_map:
+        out=[]
+        for vmap in value_map:
+            out.append(_post_process_target_images(
+                im,
+                vmap,
+                categorical,
+                nb_categories,
+                cropping,
+                padding,
+                padding_value,
+                expand_axis,
+                dtype))
+    else:
+        out=_post_process_target_images(
+                im,
+                value_map,
+                categorical,
+                nb_categories,
+                cropping,
+                padding,
+                padding_value,
+                expand_axis,
+                dtype)
+    return out
+
+
+
+def _post_process_target_images(
+        im,
+        value_map,
+        categorical,
+        nb_categories,
+        cropping,
+        padding,
+        padding_value,
+        expand_axis,
+        dtype):
     if value_map:
         im=proc.map_values(im,value_map)
     if categorical:
